@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= include('Stylesheet'); ?>
+    <script type="text/javascript">
+    function close() {
+      google.script.host.close();
+    }
+    
+    function submitKeys() {
+      document.getElementById('input-submit').disabled = true;
+      var pid = document.getElementById('input-pid').value;
+      var cmkey = document.getElementById('input-cmkey').value;
+      var previewkey = document.getElementById('input-previewkey').value;
+      google.script.run.withSuccessHandler(close).storeKeys(pid, cmkey, previewkey);
+    }
+    
+    function onSuccess(keys) {
+      var pid = keys.split(';')[0];
+      document.getElementById('input-pid').value = pid;
+      var cmkey = keys.split(';')[1];
+      document.getElementById('input-cmkey').value = cmkey;
+      var previewkey = keys.split(';')[2];
+      document.getElementById('input-previewkey').value = previewkey;
+    }
+    
+    google.script.run.withSuccessHandler(onSuccess)
+          .loadKeys();
+    </script>
+  </head>
+  <body>
+    <p>Please enter the project ID and keys, which can be found in <b>Project settings > API keys</b>.</p>
+    <br/><div class="basicform">
+      <div class="basicform-cell">
+        <label for="input-pid">Project ID:</label><input name="input-pid" id="input-pid" type="text"/>
+      </div>
+      <div class="basicform-cell">
+        <label for="input-cmkey">CM API key:</label><input name="input-cmkey" id="input-cmkey" type="text"/>
+      </div>
+      <div class="basicform-cell">
+        <label for="input-previewkey">Preview key:</label><input name="input-previewkey" id="input-previewkey" type="text"/>
+      </div>
+      <div class="basicform-cell">
+        <button id="input-submit" onclick="submitKeys()">Save</button>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= include('Stylesheet'); ?>
+    <script type="text/javascript">
+       function report(html) {
+          // Clear body
+          var body = document.getElementById('typeForm');
+          while (body.firstChild) {
+             body.removeChild(body.firstChild);
+          }
+          body.innerHTML = html;
+       }
+       
+       function doImport() {
+          var doUpdate = document.querySelector('input[name="doUpdate"]:checked');
+          var btn = document.getElementById('input-submit');
+          btn.disabled = true;
+          btn.innerHTML = 'Importing..';
+          google.script.run.withSuccessHandler(report).doImport(doUpdate.value);
+       }
+    </script>
+  </head>
+  <body>
+    <div id="typeForm" class="basicform">
+       <p>Update existing items, or always create new items?</p>
+       <div class="basicform-cell">
+          <input type="radio" name="doUpdate" value="1" id="doUpdate-1" checked/><label for="doUpdate-1">Update existing, create if not found</label>
+       </div>
+       <div class="basicform-cell">
+          <input type="radio" name="doUpdate" value="0" id="doUpdate-0"/><label for="doUpdate-0">Always create new</label>
+       </div>
+       <div class="basicform-cell">
+        <button id="input-submit" onclick="doImport()">Import</button>
+      </div>
+    </div>
+  </body>
+</html>
+
+

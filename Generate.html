@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= include('Stylesheet'); ?>
+    <script type="text/javascript">
+       var response;
+    
+       function showTypes(rsp) {
+          response = JSON.parse(rsp);
+          var list = document.getElementById('typeList');
+          if(response.code === 200) {
+             for(var i=0; i<response.data.length; i++) {
+                var btn = createButtonElement(response.data[i].codename, response.data[i].name);
+                list.append(btn);
+             }
+          }
+          else {
+             list.innerHTML = response.data;
+          }
+       }
+       
+       function enableButton(codename) {
+          var btn = document.getElementById(codename);
+          if(btn) btn.disabled = false;
+       }
+       
+       function createButtonElement(codename, name) {
+          var btnHtml = '<button id="' + codename + '" />' + name + '</button>';
+          var btnFragment = document.createElement('div');
+          btnFragment.innerHTML = btnHtml;
+          btnFragment.classList.add('basicform-cell');
+          btnFragment.onclick = function(e) {
+             e = e || window.event;
+             var src = e.target || e.srcElement;
+             src.disabled = true;
+             google.script.run.withSuccessHandler(enableButton).makeSheet(codename, JSON.stringify(response));
+          }
+       
+          return btnFragment;
+       }
+
+       google.script.run.withSuccessHandler(showTypes).loadTypes();
+    </script>
+  </head>
+  <body>
+    <div id="typeForm" class="basicform">
+       <p>These are the content types assigned to your project. Click a button to create a new Sheet with the element code names as headers for easy importing.</p>
+       <div id="typeList"></div>
+    </div>
+  </body>
+</html>
+
+
