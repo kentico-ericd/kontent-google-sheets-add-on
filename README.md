@@ -1,3 +1,5 @@
+[![Stack Overflow](https://img.shields.io/badge/Stack%20Overflow-ASK%20NOW-FE7A16.svg?logo=stackoverflow&logoColor=white)](https://stackoverflow.com/tags/kentico-kontent)
+
 # ![Sheets](https://www.google.com/images/about/sheets-icon.svg) Google Sheets Import
 
 # Installation
@@ -75,3 +77,5 @@ After clicking the __Import__ button, please wait while the script runs. When it
 To develop and test this Google Script project, first install [this Chrome extension](https://chrome.google.com/webstore/detail/google-apps-script-github/lfjcgcmkmjjlieihflfhjopckgpelofo?hl=en) which integrates Google Scripts with Git. Then fork this repository and create a new Google Script project on https://script.google.com/.
 
 Use the new menus added by the extension (Repository, Branch, ..) to pull the code from your forked repository into the Script project. After you've made the desired code changes, test the add-on in a Google Sheet using the _Run > Test as add-on_ menu.
+
+![Analytics](https://kentico-ga-beacon.azurewebsites.net/api/UA-69014260-4/Kentico/kontent-sheets-import?pixel)
