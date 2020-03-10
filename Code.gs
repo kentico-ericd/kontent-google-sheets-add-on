@@ -8,6 +8,7 @@ var VARIANT_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items
 var WORKFLOW_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/workflow';
 var NEWVERSION_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/{item_identifier}/variants/codename/{language_codename}/new-version';
 var MOVEWORKFLOW_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/{item_identifier}/variants/codename/{language_codename}/workflow/{workflow_step_identifier}';
+var SNIPPET_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/snippets/{snippet_identifier}';
 
 // Import variables
 var output;
@@ -100,19 +101,14 @@ function makeSheet(codename, typeJSON) {
     if(t.codename === codename) {
       var ss = SpreadsheetApp.getActiveSpreadsheet();
       var newSheet = ss.insertSheet(codename);
-      
-      // Remove guideline elements
-      var elementsFiltered = [];
-      for(var e=0; e<t.elements.length; e++) {
-        if(t.elements[e].type !== "guidelines") elementsFiltered.push(t.elements[e]);
-      }
-      
+      var elements = getTypeElements(t);
+    
       // Generate headers
-      var range = newSheet.getRange(1, 1, 1, elementsFiltered.length + 2);
+      var range = newSheet.getRange(1, 1, 1, elements.length + 2);
       range.getCell(1, 1).setValue("name");
       range.getCell(1, 2).setValue("external_id");
-      for(var i=0; i<elementsFiltered.length; i++) {
-        range.getCell(1, i+3).setValue(elementsFiltered[i].codename);
+      for(var i=0; i<elements.length; i++) {
+        range.getCell(1, i+3).setValue(elements[i].codename);
       }
       
       return codename;
@@ -230,6 +226,61 @@ function getExistingVariant(itemId, externalId, lang) {
   Other CM functions
 -----------------------------------------------
 **/
+
+function getSnippetElements(id) {
+  var pid = PropertiesService.getUserProperties().getProperty('pid');
+  var cmkey = PropertiesService.getUserProperties().getProperty('cmkey');
+  var url = SNIPPET_ENDPOINT.formatUnicorn({project_id: pid, snippet_identifier: id});
+  var options = {
+    'method': 'get',
+    'contentType': 'application/json',
+    'muteHttpExceptions': true,
+    'headers': {
+      'Authorization': 'Bearer ' + cmkey
+    }
+  };
+  apiCounter++;
+  var response = UrlFetchApp.fetch(url, options);
+  if(response.getResponseCode() === 200) {
+    // Success
+    return {
+      'code': 200,
+      'data': JSON.parse(response.getContentText()).elements
+    }
+  }
+  else {
+    // Failure
+    return {
+      'code': response.getResponseCode(),
+      'data': JSON.parse(response.getContentText().message)
+    }
+  }
+}
+
+/**
+** Gets type elements and expands on snippet elements to include in the resulting array
+**/
+function getTypeElements(type) {
+  var elements = [];
+  type.elements.forEach(e => {
+        switch(e.type) {
+          case "snippet":
+          var response = getSnippetElements(e.snippet.id);
+          if(response.code === 200) {
+            var snippetElements = response.data;
+            // Remove guidelines
+            snippetElements = snippetElements.filter(s => s.type !== "guidelines");
+            Array.prototype.push.apply(elements, snippetElements);
+          }
+          break;
+          case "guidelines": break; // Don't add guidelines
+          default:
+            elements.push(e);
+          break;
+        }
+  });
+  return elements;
+}
 
 function getWorkflowSteps() {
   var pid = PropertiesService.getUserProperties().getProperty('pid');
@@ -572,9 +623,7 @@ function updateExistingItem(existingItem, externalId, typeCodeName, headers, val
   var typeElements;
   var response = getType(typeCodeName); 
   if(response.code === 200) {
-    for(var i=0; i<response.data.elements.length; i++) {
-      typeElements = response.data.elements;
-    }
+    typeElements = getTypeElements(response.data);
   }
   else {
     // Content type failure
