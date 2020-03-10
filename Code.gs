@@ -86,8 +86,7 @@ function navigate(page) {
 
 function makeSheet(codename, typeJSON) {
   var types = JSON.parse(typeJSON).data;
-  console.log(types);
-  
+
   // Check if sheet with code name already exists
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(codename);
   if (sheet != null) {
@@ -96,7 +95,8 @@ function makeSheet(codename, typeJSON) {
   }
   
   // Find type in JSON matching codename
-  for each (var t in types) {
+  for(var i=0; i<types.length; i++) {
+    var t = types[i];
     if(t.codename === codename) {
       var ss = SpreadsheetApp.getActiveSpreadsheet();
       var newSheet = ss.insertSheet(codename);
@@ -595,11 +595,27 @@ function updateExistingItem(existingItem, externalId, typeCodeName, headers, val
         
         // Element-specific fixes to ensure data is in correct format for upsert
         switch(typeElements[k].type) {
+          case "asset":
+            
+            // Value should be in format "<identifier type>:<identifier>,<identifier type>:<identifier>"
+            // Split into expected format value:[{ <identifier type>: <identifier> }, { <identifier type>: <identifier> }]
+            var ar = value.split(",");
+            value = [];
+            for(var a=0; a<ar.length; a++) {
+              // Individual asset from list
+              var asset = ar[a].split(":");
+              if(asset.length === 2) {
+                value.push({[asset[0]]:asset[1]}); 
+              }
+            }
+            break;
           case "date_time":
+            
             value = tryFormatDateTime(typeElements[k].codename, value);
             break;
           case "multiple_choice":
           case "taxonomy":
+            
             // Values should be comma-separated code names
             if(value.length > 0) {
               var ar = value.split(',');
