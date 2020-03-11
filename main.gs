@@ -323,6 +323,11 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, headers, val
         
         // Element-specific fixes to ensure data is in correct format for upsert
         switch(typeElements[k].type) {
+          case "rich_text":
+            
+            // Parse special ## macros
+            value = parseRichText(value);
+            break;
           case "asset":
             
             // Value should be in format "<identifier type>:<identifier>,<identifier type>:<identifier>"
@@ -370,6 +375,8 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, headers, val
       }
     }
   }
+  
+  if(stopProcessing) return;  
   
   updateVariant(elements, itemId, lang);
 }
