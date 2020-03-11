@@ -39,7 +39,7 @@ In addition to the element code names, the header row should also contain 3 othe
 
 - __name__ (required): The name of the content item to create or update.
 - __external_id__ (optional): The [external](https://docs.kontent.ai/reference/management-api-v2#section/External-IDs-for-imported-content) ID of the content item to update (overrides name header).
-- __language__ (optional): The language of the variant to update (defaults to `en-US`). This should match the code name of a language in the project’s Localization page, and is case sensitive.
+- __language__ (optional): The language of the variant to update. This should match the code name of a language in the project’s Localization page, and is case sensitive. If a language is not provided, the add-on will get the project's default language using Management API.
 
 The following is an example of what a Sheet named __product__ might look like:
 
