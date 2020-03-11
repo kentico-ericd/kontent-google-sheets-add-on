@@ -62,7 +62,7 @@ Or, you can use special macros designed for this add-on. In the list below, the 
   | ----- | ----------- | ------ | ------- |
   | link-item | Inserts a link to a content item | `macro:identifier_type:identifier:text` | `##link-item:id:5946ca5d-cebe-4be1-b5f0-4cd0a0e43fb5:coffee is good##` |
   | link-asset | Inserts a link to an asset | `macro:identifier_type:identifier:text` | `##link-asset:id:0013263e-f2a9-40b1-9a3e-7ab6510bafe5:asset##` |
-  | item | Inserts an inline content item | `macro:identifier_type:identifier` | `##item:external-id:6f5294e5-d9f7-438d-8c94-919fefb3112d##` |
+  | item | Inserts an inline content item | `macro:identifier_type:identifier` | `##item:external-id:article6##` |
 - __Assets__: Values for Asset elements should be a comma-separated list, as the element can accept multiple Assets. The format for a single asset is `<identifier type>:<identifier>` where the type is either "id" or "external_id" and the identifier is the corresponding value. An example of updating multiple Assets at once is `id:0013263e-f2a9-40b1-9a3e-7ab6510bafe5,id:08bf515c-3b0e-4760-907b-6db0a22d41f3`.
 
 ## Importing the Content
