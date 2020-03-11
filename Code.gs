@@ -1,14 +1,15 @@
 // Endpoints
-var PREVIEW_ENDPOINT = 'https://preview-deliver.kontent.ai/{project_id}';
-var TYPES_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/types';
-var TYPE_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/types/codename/{code_name}';
-var ITEMS_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items';
-var ITEM_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/external-id/{external_id}';
-var VARIANT_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/{item_identifier}/variants/codename/{language_codename}';
-var WORKFLOW_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/workflow';
-var NEWVERSION_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/{item_identifier}/variants/codename/{language_codename}/new-version';
-var MOVEWORKFLOW_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/{item_identifier}/variants/codename/{language_codename}/workflow/{workflow_step_identifier}';
-var SNIPPET_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/snippets/{snippet_identifier}';
+const PREVIEW_ENDPOINT = 'https://preview-deliver.kontent.ai/{project_id}';
+const TYPES_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/types';
+const TYPE_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/types/codename/{code_name}';
+const ITEMS_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items';
+const ITEM_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/external-id/{external_id}';
+const VARIANT_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/{item_identifier}/variants/codename/{language_codename}';
+const WORKFLOW_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/workflow';
+const NEWVERSION_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/{item_identifier}/variants/codename/{language_codename}/new-version';
+const MOVEWORKFLOW_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/{item_identifier}/variants/codename/{language_codename}/workflow/{workflow_step_identifier}';
+const SNIPPET_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/snippets/{snippet_identifier}';
+const LANGUAGES_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/languages';
 
 // Import variables
 var output;
@@ -226,6 +227,38 @@ function getExistingVariant(itemId, externalId, lang) {
   Other CM functions
 -----------------------------------------------
 **/
+
+function getDefaultLanguage() {
+  var pid = PropertiesService.getUserProperties().getProperty('pid');
+  var cmkey = PropertiesService.getUserProperties().getProperty('cmkey');
+  var url = LANGUAGES_ENDPOINT.formatUnicorn({project_id: pid});
+  var options = {
+    'method': 'get',
+    'contentType': 'application/json',
+    'muteHttpExceptions': true,
+    'headers': {
+      'Authorization': 'Bearer ' + cmkey
+    }
+  };
+  apiCounter++;
+  var response = UrlFetchApp.fetch(url, options);
+  if(response.getResponseCode() === 200) {
+    // Success
+    const languages = JSON.parse(response.getContentText()).languages;
+    var defaultLanguage = languages.filter(l => l.is_default);
+    if(defaultLanguage.length > 0) {
+      return {
+        'code': response.getResponseCode(),
+        'data': defaultLanguage[0]
+      } 
+    }
+  }
+  // Failure
+  return {
+    'code': response.getResponseCode(),
+    'data': JSON.parse(response.getContentText().message)
+  }
+}
 
 function getSnippetElements(id) {
   var pid = PropertiesService.getUserProperties().getProperty('pid');
@@ -445,6 +478,16 @@ function doImport(doUpdate) {
     return 'Your sheet needs to contain a "name" header';
   }
   
+  // Get default lang of project or use the "default" language in new projects
+  const langResponse = getDefaultLanguage();
+  let defaultLang;
+  if(langResponse.code === 200) {
+    defaultLang = langResponse.data.codename;
+  }
+  else {
+    defaultLang = 'default'; 
+  }
+  
   if(doUpdate) {
     // Get ID of Published/Draft workflow step for later use
     var response = getWorkflowSteps();
@@ -467,7 +510,7 @@ function doImport(doUpdate) {
   
   for(var k=2; k<=rows; k++) {
     stopProcessing = false;
-    upsertRowData(sheet.getRange(k, 1, 1, cols).getValues(), headers, type, doUpdate, k);
+    upsertRowData(sheet.getRange(k, 1, 1, cols).getValues(), headers, type, doUpdate, k, defaultLang);
   }
   
   output.append('</ul>');
@@ -481,11 +524,11 @@ function doImport(doUpdate) {
   return output.getContent();
 }
 
-function upsertRowData(values, headers, type, doUpdate, rowNum) {
+function upsertRowData(values, headers, type, doUpdate, rowNum, defaultLang) {
   var name = (nameColumn === -1) ? '' : values[0][nameColumn];
-  var lang = (langColumn === -1) ? 'en-US' : values[0][langColumn];
+  var lang = (langColumn === -1) ? defaultLang : values[0][langColumn];
   var externalId = (externalIdColumn === -1) ? '' : values[0][externalIdColumn];
-  if(lang === '' || lang === undefined) lang = 'en-US';
+  if(lang === '' || lang === undefined) lang = defaultLang;
 
   
   output.append('<li>Importing row ' + rowNum);
