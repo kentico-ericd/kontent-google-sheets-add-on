@@ -329,6 +329,7 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, headers, val
             value = parseRichText(value);
             break;
           case "asset":
+          case "modular_content":
             
             // Value should be in format "<identifier type>:<identifier>,<identifier type>:<identifier>"
             // Split into expected format value:[{ <identifier type>: <identifier> }, { <identifier type>: <identifier> }]
@@ -336,9 +337,9 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, headers, val
             value = [];
             for(var a=0; a<ar.length; a++) {
               // Individual asset from list
-              const asset = ar[a].split(":");
-              if(asset.length === 2) {
-                value.push({[asset[0]]:asset[1]}); 
+              const record = ar[a].split(":");
+              if(record.length === 2) {
+                value.push({[record[0]]:record[1]}); 
               }
             }
             break;
