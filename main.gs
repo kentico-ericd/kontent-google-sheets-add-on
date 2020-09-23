@@ -314,7 +314,7 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, headers, val
 
   // Create JS object with only row data for headers that match type elements
   const elements = [];
-  for(var i=1; i<headers.length; i++) {
+  for(var i=0; i<headers.length; i++) {
     // Scan elements for code name
     for(var k=0; k<typeElements.length; k++) {
       if(typeElements[k].codename === headers[i]) {
