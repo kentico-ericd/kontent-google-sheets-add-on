@@ -16,7 +16,7 @@ let output;
 let apiCounter = 0, itemCounter = 0, variantCounter = 0, errorCounter = 0;
 let stopProcessing = false;
 let publishedWorkflowStepId, draftWorkflowStepId;
-let langColumn = -1, nameColumn = -1, externalIdColumn = -1;
+let langColumn = -1, nameColumn = -1, externalIdColumn = -1, currencyFormatColumn = -1;
 
 const include = (filename) => {
   return HtmlService.createHtmlOutputFromFile(filename)
@@ -104,11 +104,13 @@ const makeSheet = (codename, typeJSON) => {
       const elements = getTypeElements(type);
     
       // Generate headers
-      const range = newSheet.getRange(1, 1, 1, elements.length + 2);
+      const range = newSheet.getRange(1, 1, 1, elements.length + 3);
       range.getCell(1, 1).setValue("name");
       range.getCell(1, 2).setValue("external_id");
+      range.getCell(1, 3).setValue("currency_format").setNote('Set this to "US" (or leave empty) for numbers formatted like "1,000.50" or "EU" for "1 000,50" formatting.');
+      
       for(var i=0; i<elements.length; i++) {
-        range.getCell(1, i+3).setValue(elements[i].codename);
+        range.getCell(1, i+4).setValue(elements[i].codename);
       }
       
       return codename;
@@ -130,6 +132,7 @@ const doImport = (doUpdate) => {
   langColumn = -1;
   nameColumn = -1;
   externalIdColumn = -1;
+  currencyFormatColumn = -1;
   
   const sheet = SpreadsheetApp.getActiveSheet();
   const cols = sheet.getLastColumn();
@@ -155,6 +158,9 @@ const doImport = (doUpdate) => {
         break;
       case "external_id":
         externalIdColumn = i
+        break;
+      case "currency_format":
+        currencyFormatColumn = i;
         break;
     }
     headers.push(value);
@@ -323,6 +329,13 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, headers, val
         
         // Element-specific fixes to ensure data is in correct format for upsert
         switch(typeElements[k].type) {
+          case "number":
+            
+            // Get currency_format column value
+            const currencyFormat = (currencyFormatColumn === -1) ? 'US' : values[0][currencyFormatColumn];
+            // Convert number string like '1,000.50' or '1 000,50' to float
+            value = tryParseNumber(value, currencyFormat);
+            break;
           case "rich_text":
             
             // Parse special ## macros
@@ -355,8 +368,11 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, headers, val
               let ar = value.split(',');
               value = [];
               for(var v=0; v<ar.length; v++) {
+                
+                // Ensure lowercase for codenames
+                var codename = ar[v].trim().toLowerCase();
                 value.push({
-                  "codename": ar[v].trim()
+                  "codename": codename
                 });
               }
             }
@@ -387,6 +403,28 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, headers, val
   JS functions
 -----------------------------------------------
 **/
+
+// Format can be 'US' or 'EU'
+const tryParseNumber = (number, format) => {
+
+  number = number.toString().trim();
+  switch(format) {
+    case 'US':
+  
+      // At the moment, no processing seems to be needed
+      // Strings like '1,000.50' are already accepted by Kontent
+      break;
+    case 'EU':
+  
+      // Remove inner spaces and dots
+      number = number.replace(/\s/g, '').replace(/\./g, '');
+      // Replace comma with decimal
+      number = number.replace(/\,/g, '.');
+      break;
+  }
+
+  return number;
+}
 
 // Currently doesn't work for dd/mm/yy
 const tryFormatDateTime = (elementCodeName, dateTime) => {
