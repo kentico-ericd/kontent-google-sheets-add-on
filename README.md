@@ -40,6 +40,7 @@ In addition to the element code names, the header row should also contain 3 othe
 - __name__ (required): The name of the content item to create or update.
 - __external_id__ (optional): The [external](https://docs.kontent.ai/reference/management-api-v2#section/External-IDs-for-imported-content) ID of the content item to update (overrides name header).
 - __language__ (optional): The language of the variant to update. This should match the code name of a language in the project’s Localization page, and is case sensitive. If a language is not provided, the add-on will get the project's default language using Management API.
+- __currency_format__ (optional): Used to determine how values for Kontent "number" elements are parsed. US-formatted strings ("1,500.75") and EU-formatted strings ("1 500,75") are parsed into a valid number based on this setting. Should be either `US` or `EU`. If omitted or empty, US formatting will be used.
 
 The following is an example of what a Sheet named __product__ might look like:
 
@@ -53,6 +54,7 @@ The following is an example of what a Sheet named __product__ might look like:
 ## Formatting Cell Values
 To avoid errors in importing data, the data in each column must be formatted according to the element it will be stored in. Most elements (such as Text and Number) are straight-forward, but some require specific formatting:
 
+- __Number__: If the value is not a valid `float` like "12.50" the script will try to parse the number based on the __currency_format__ value (see [Setting the headers](#setting-the-headers)). As US and EU formats are currently supported, some examples of valid numbers are: `1,500.75` and `1 500,75`. The cell should not contain letters or currency symbols.
 - __Date & Time__: The script will first try to parse the value using the JavaScript [Date(string) constructor](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date), so any valid DateTime string will succeed. A typical valid string would be in the format `mm/dd/yyyy hh:mm am/pm`. The script will also accept strings that use dashes instead of slashes (`12-25-2019 6:00 AM`) or timestamps from SQL (`2019-12-25 06:00:00.0000000`).
 - __Taxonomy and Multiple Choice__: Values should be the code name of the items, separated by a comma (for example `on_sale, bestseller`)
 - __Rich Text__: This element will most likely require the most pre-processing; try to avoid complex HTML and text formatting. The list of supported HTML elements and their syntax can be found in our [documentation](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/html5-elements-allowed-in-rich-text).
