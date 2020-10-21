@@ -5,7 +5,7 @@
 # Installation
 Install from the G-Suite Marketplace [here](https://gsuite.google.com/marketplace/app/kentico_kontent/482429381322). Once installed, a new _Kentico Kontent_ menu will appear in the _Add-ons_ menu in Google Sheets:
 
-![Menu](https://assets-us-01.kc-usercontent.com/4e9bdd7a-2db8-4c33-a13a-0c368ec2f108/d7fc0c90-dfe4-4685-98fe-1f983a58f7c8/sheets-addon-menu.png)
+![Menu](img/addon.png)
 
 After installing, locate the following keys in http://app.kontent.ai and add them to the add-on's _Configure_ menu:
 
@@ -21,11 +21,11 @@ You may create a new Sheet or edit an existing one. The _Generate_ menu of the a
 
 If you have a local spreadsheet file, you can open it in Google Sheets by uploading it to Google Drive, then selecting _Open with > Google Sheets_.
 
-![Open in Sheets](https://assets-us-01.kc-usercontent.com/4e9bdd7a-2db8-4c33-a13a-0c368ec2f108/cb91a697-53dd-41ae-a34d-826eac738ac7/sheets-addon-openwith.png)
+![Open in Sheets](img/openwith.png)
 
 Once the file is open in Sheets, you must re-save it as a Google Sheet file:
 
-![Save as Sheet](https://assets-us-01.kc-usercontent.com/4e9bdd7a-2db8-4c33-a13a-0c368ec2f108/b93f6f94-4711-4c9c-94b0-ec3997140d49/sheets-addon-saveas.png)
+![Save as Sheet](img/saveas.png)
 
 Ensure that the __name__ of the Sheet matches the code name of the content type in your project which will be used to create items.
 
@@ -33,7 +33,7 @@ Ensure that the __name__ of the Sheet matches the code name of the content type 
 
 The headers (first row) of your Sheet must contain the code names of the content type's elements. If you use the _Generate_ menu of the add-on, these headers will be automatically generated. If adding headers manually, you can find the code names of the elements when editing the content type in https://app.kontent.ai.
 
-![Code names](https://assets-us-01.kc-usercontent.com/4e9bdd7a-2db8-4c33-a13a-0c368ec2f108/9ba8baff-41c0-4d04-b536-52b24e25c99d/sheets-addon-type.png)
+![Code names](img/codename.png)
 
 In addition to the element code names, the header row should also contain 3 other headers:
 
@@ -54,7 +54,11 @@ The following is an example of what a Sheet named __product__ might look like:
 ## Formatting Cell Values
 To avoid errors in importing data, the data in each column must be formatted according to the element it will be stored in. Most elements (such as Text and Number) are straight-forward, but some require specific formatting:
 
-- __Number__: If the value is not a valid `float` like "12.50" the script will try to parse the number based on the __currency_format__ value (see [Setting the headers](#setting-the-headers)). As US and EU formats are currently supported, some examples of valid numbers are: `1,500.75`, `1.500,75`, and `1 500,75`. The cell should not contain letters or currency symbols.
+- __Number__: If the value is not a valid `float` like "12.50" the script will try to parse the number based on the __currency_format__ value (see [Setting the headers](#setting-the-headers)). As US and EU formats are currently supported, some examples of valid numbers are: `1,500.75`, `1.500,75`, and `1 500,75`. The cell should not contain letters or currency symbols.  
+If you are using EU formatting, we recommend changing any Number columns in the Sheet to use __Plain text__ formatting:
+
+![Column formatting](img/format.png)
+
 - __Date & Time__: The script will first try to parse the value using the JavaScript [Date(string) constructor](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date), so any valid DateTime string will succeed. A typical valid string would be in the format `mm/dd/yyyy hh:mm am/pm`. The script will also accept strings that use dashes instead of slashes (`12-25-2019 6:00 AM`) or timestamps from SQL (`2019-12-25 06:00:00.0000000`).
 - __Taxonomy and Multiple Choice__: Values should be the code name of the items, separated by a comma (for example `on_sale, bestseller`)
 - __Rich Text__: This element will most likely require the most pre-processing; try to avoid complex HTML and text formatting. The list of supported HTML elements and their syntax can be found in our [documentation](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/html5-elements-allowed-in-rich-text).
