@@ -1,18 +1,19 @@
+const PREVIEW_ENDPOINT = 'https://preview-deliver.kontent.ai/{project_id}';
+
 /**
 ** Executes a GET request against the passed endpoint after applying the ProjectID to the URL, then other passed parameters.
 ** Automatically increments the apiCounter variable
 **/
 const executeGetRequest = (endpoint, args) => {
-  const pid = PropertiesService.getUserProperties().getProperty('pid');
-  const cmkey = PropertiesService.getUserProperties().getProperty('cmkey');
-  let url = endpoint.formatUnicorn({project_id: pid});
+  const keys = loadKeys();
+  let url = endpoint.formatUnicorn({project_id: keys.pid});
   if(args) url = url.formatUnicorn(args);
   const options = {
     'method': 'get',
     'contentType': 'application/json',
     'muteHttpExceptions': true,
     'headers': {
-      'Authorization': 'Bearer ' + cmkey
+      'Authorization': 'Bearer ' + keys.cmkey
     }
   };
 
@@ -26,22 +27,21 @@ const executeGetRequest = (endpoint, args) => {
 ** Automatically increments the apiCounter variable.
 **/
 const executeRequest = (endpoint, method, data, args) => {
-  const pid = PropertiesService.getUserProperties().getProperty('pid');
-  const cmkey = PropertiesService.getUserProperties().getProperty('cmkey');
-  let url = endpoint.formatUnicorn({project_id: pid});
+  const keys = loadKeys();
+  let url = endpoint.formatUnicorn({project_id: keys.pid});
   if(args) url = url.formatUnicorn(args);
   let options = {
     'method': method,
     'contentType': 'application/json',
     'muteHttpExceptions': true,
     'headers': {
-      'Authorization': 'Bearer ' + cmkey
+      'Authorization': 'Bearer ' + keys.cmkey
     }
   };
   if(data) {
     options['payload'] = JSON.stringify(data);
   }
-          
+  
   apiCounter++;
   return UrlFetchApp.fetch(url, options);
 }

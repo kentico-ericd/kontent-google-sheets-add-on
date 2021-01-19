@@ -20,7 +20,7 @@ const parseRichText = (text) => {
       // convertMacro returned null
       stopProcessing = true;
       errorCounter++;
-      output.append(`<li>Error resolving macro ${match[0]}. Skipping row...</li>`);
+      upsertResult.errors.push(`Error resolving macro ${match[0]}. Skipping row...`);
     }
   });
   return text;

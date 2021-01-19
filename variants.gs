@@ -1,3 +1,5 @@
+const VARIANT_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/{item_identifier}/variants/codename/{language_codename}';
+
 const createNewVersion = (itemId, lang) => {
   if(stopProcessing) {
     return; 
@@ -18,25 +20,11 @@ const createNewVersion = (itemId, lang) => {
 }
 
 const updateVariant = (elements, itemId, lang) => {
-  const variantResponse = executeRequest(VARIANT_ENDPOINT, 'put', {'elements': elements}, {item_identifier: itemId, language_codename: lang});
-  if(variantResponse.getResponseCode() === 200 || variantResponse.getResponseCode() === 201) {
-    // Variant success
-    variantCounter++;
-    output.append('<li>Variant updated</li>');
+  const response = executeRequest(VARIANT_ENDPOINT, 'put', {'elements': elements}, {item_identifier: itemId, language_codename: lang});
+  return {
+    code: response.getResponseCode(),
+    data: JSON.parse(response.getContentText())
   }
-  else {
-    // Variant failure
-    errorCounter++;
-    stopProcessing = true;
-    let responseText = JSON.parse(variantResponse.getContentText());
-    if(responseText.validation_errors) {
-      responseText = responseText.validation_errors[0].message;
-    }
-    else {
-      responseText = responseText.message;
-    }
-    output.append(`<li>Error upserting language variant: ${responseText}</li>`);
-  } 
 }
 
 const getExistingVariant = (itemId, externalId, lang) => {

@@ -1,3 +1,6 @@
+const ITEMS_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items';
+const ITEM_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/external-id/{external_id}';
+
 const createNewItem = (type, name, externalId) => {
   if(stopProcessing) {
     return; 
@@ -27,7 +30,6 @@ const createNewItem = (type, name, externalId) => {
     // Content item success
     itemCounter++;
     const item = JSON.parse(itemResponse.getContentText());
-    output.append(`<li>Created new content item, ID ${item.id}</li>`);
     return item;
   }
   else {
@@ -41,7 +43,7 @@ const createNewItem = (type, name, externalId) => {
     else {
       responseText = responseText.message;
     }
-    output.append(`<li>Error creating content item: ${responseText}</li>`);
+    upsertResult.errors.push(`Error creating content item: ${responseText}`);
   }
 }
 
@@ -54,15 +56,14 @@ const findById = (externalId) => {
 }
 
 const findByName = (name, type) => {
-  const pid = PropertiesService.getUserProperties().getProperty('pid');
-  const previewkey = PropertiesService.getUserProperties().getProperty('previewkey');
-  const url = `${PREVIEW_ENDPOINT.formatUnicorn({project_id: pid})}/items?system.name=${name}&system.type=${type}`;
+  const keys = loadKeys();
+  const url = `${PREVIEW_ENDPOINT.formatUnicorn({project_id: keys.pid})}/items?system.name=${name}&system.type=${type}`;
   const options = {
     'method': 'get',
     'contentType': 'application/json',
     'muteHttpExceptions': true,
     'headers': {
-      'Authorization': 'Bearer ' + previewkey
+      'Authorization': 'Bearer ' + keys.previewkey
     }
   };
 

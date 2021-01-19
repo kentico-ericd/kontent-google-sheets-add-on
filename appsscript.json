@@ -1,0 +1,23 @@
+{
+  "addOns": {
+    "common": {
+      "name": "Kontent Sheets Import",
+      "useLocaleFromApp": true,
+      "logoUrl": "https://github.com/Kentico/kontent-google-sheets-add-on/blob/master/img/logo.png?raw=true",
+      "homepageTrigger": {
+        "enabled": true,
+        "runFunction": "showHomeCard"
+      }
+    },
+    "sheets": {
+
+    }
+    
+  },
+  
+  "timeZone": "America/New_York",
+  "dependencies": {
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8"
+}
