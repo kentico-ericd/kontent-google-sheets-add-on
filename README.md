@@ -27,7 +27,11 @@ Once the file is open in Sheets, you must re-save it as a Google Sheet file:
 
 ![Save as Sheet](img/saveas.png)
 
-Ensure that the __name__ of the Sheet matches the code name of the content type in your project which will be used to create items.
+> :warning: The name of the Sheet must match the code name of the content type in your project which will be used to create items
+
+If you used the __Generate Sheet__ menu to create the Sheet, the code name of the content type will be automatically generated. If you are creating the Sheet manually, you can find the content type code name in Kontent:
+
+![Content type codename](/img/typename.png)
 
 ## Setting the headers
 
