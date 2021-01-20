@@ -1,4 +1,5 @@
 // Import variables
+let startTime;
 let apiCounter = 0, itemCounter = 0, variantCounter = 0, errorCounter = 0;
 let stopProcessing = false;
 let publishedWorkflowStepId, draftWorkflowStepId;
@@ -7,6 +8,7 @@ let langColumn = -1, nameColumn = -1, externalIdColumn = -1, currencyFormatColum
 let resultJSON = { rows: [], stats: {} }, upsertResult = {};
 
 const resetGlobals = () => {
+  startTime = new Date();
   apiCounter = 0;
   itemCounter = 0;
   variantCounter = 0;
@@ -47,8 +49,15 @@ const makeResultSheet = (e) => {
   const newSheet = ss.insertSheet(`Import log: ${new Date().toUTCString()}`);
   const values = [];
 
+  // Get import duration
+  const endTime = new Date();
+  // @ts-ignore
+  let duration = endTime - startTime;
+  duration /= 1000;
+
   // Add stats (remember to fill empty cols with a value)
   values.push(['Content type:', resultJSON.stats.type, '', '', '']);
+  values.push(['Seconds elapsed:', duration, '', '', '']);
   values.push(['Total API Calls:', resultJSON.stats.apiCounter, '', '', '']);
   values.push(['New content items:', resultJSON.stats.itemCounter, '', '', '']);
   values.push(['Language variants updated:', resultJSON.stats.variantCounter, '', '', '']);
@@ -213,6 +222,7 @@ const upsertRowData = (rowValues, headers, type, doUpdate, defaultLang) => {
       const newItem = itemResponse.data;
       upsertResult.results.push(`Created new item with ID ${newItem.id}`);
       upsertResult.updatedExisting = false;
+
       updateExistingItem(newItem, externalId, type, headers, rowValues, true, lang);
     }
     else {

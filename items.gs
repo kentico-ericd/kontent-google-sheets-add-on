@@ -1,5 +1,6 @@
 const ITEMS_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items';
 const ITEM_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/external-id/{external_id}';
+const PREVIEW_ENDPOINT = 'https://preview-deliver.kontent.ai/{project_id}';
 
 const createNewItem = (type, name, externalId) => {
   if(stopProcessing) {
@@ -62,7 +63,7 @@ const findById = (externalId) => {
 const findByName = (name, type) => {
   const keys = loadKeys();
   // @ts-ignore
-  const url = `${PREVIEW_ENDPOINT.formatUnicorn({project_id: keys.pid})}/items?system.name=${name}&system.type=${type}`;
+  const url = `${PREVIEW_ENDPOINT.formatUnicorn({project_id: keys.pid})}/items?system.name=${name}&system.type=${type}&elements=fakeelementname&depth=0`;
   const options = {
     'method': 'get',
     'contentType': 'application/json',

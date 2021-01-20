@@ -1,5 +1,3 @@
-const PREVIEW_ENDPOINT = 'https://preview-deliver.kontent.ai/{project_id}';
-
 /**
 ** Executes a GET request against the passed endpoint after applying the ProjectID to the URL, then other passed parameters.
 ** Automatically increments the apiCounter variable
