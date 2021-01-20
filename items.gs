@@ -29,13 +29,14 @@ const createNewItem = (type, name, externalId) => {
   if(itemResponse.getResponseCode() === 201) {
     // Content item success
     itemCounter++;
-    const item = JSON.parse(itemResponse.getContentText());
-    return item;
+    return {
+      code: itemResponse.getResponseCode(),
+      data: JSON.parse(itemResponse.getContentText())
+    };
   }
   else {
     // Content item failure
     errorCounter++;
-    stopProcessing = true;
     let responseText = JSON.parse(itemResponse.getContentText());
     if(responseText.validation_errors) {
       responseText = responseText.validation_errors[0].message;
@@ -43,7 +44,10 @@ const createNewItem = (type, name, externalId) => {
     else {
       responseText = responseText.message;
     }
-    upsertResult.errors.push(`Error creating content item: ${responseText}`);
+    return {
+      code: itemResponse.getResponseCode(),
+      data: responseText
+    };
   }
 }
 
@@ -57,6 +61,7 @@ const findById = (externalId) => {
 
 const findByName = (name, type) => {
   const keys = loadKeys();
+  // @ts-ignore
   const url = `${PREVIEW_ENDPOINT.formatUnicorn({project_id: keys.pid})}/items?system.name=${name}&system.type=${type}`;
   const options = {
     'method': 'get',

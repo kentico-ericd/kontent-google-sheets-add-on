@@ -102,22 +102,20 @@ const doImport = (e) => {
   // There's only one input in the form, so if there's any values then it was checked
   let doUpdate = e.commonEventObject.formInputs ? true : false;
 
+  // Get ALL values from sheet
   const sheet = SpreadsheetApp.getActiveSheet();
-  const cols = sheet.getLastColumn();
-  const rows = sheet.getLastRow();
   const type = sheet.getName().toLowerCase();
+  const values = sheet.getDataRange().getValues();
 
-  if (cols < 1) {
+  if (values[0].length < 1) {
     showAlert('Your sheet doesn\'t contain enough data to import!');
     return;
   }
 
-  const headerRow = sheet.getRange(1, 1, 1, cols).getValues();
-  const headers = [];
-
   // Get all header values
-  for (var i = 0; i < cols; i++) {
-    const value = headerRow[0][i].toString().toLowerCase();
+  const headers = [];
+  for (var i = 0; i < values[0].length; i++) {
+    const value = values[0][i].toString().toLowerCase();
     switch (value) {
       case "language":
         langColumn = i
@@ -169,12 +167,13 @@ const doImport = (e) => {
     }
   }
 
-  for (var k = 2; k <= rows; k++) {
+  for (var k = 1; k < values.length; k++) {
     stopProcessing = false;
     // Init json result object for this row
-    upsertResult = { "row": k, "name": "", updatedExisting: false, "errors": [], "results": [] };
+    // Increase k by 1 because values[] is 0-based but Sheet row numbers start at 1
+    upsertResult = { "row": k + 1, "name": "", updatedExisting: false, "errors": [], "results": [] };
 
-    upsertRowData(sheet.getRange(k, 1, 1, cols).getValues(), headers, type, doUpdate, defaultLang);
+    upsertRowData(values[k], headers, type, doUpdate, defaultLang);
 
     // Add result json object to sheet result object
     resultJSON.rows.push(upsertResult);
@@ -189,10 +188,10 @@ const doImport = (e) => {
   makeResultSheet(e);
 }
 
-const upsertRowData = (values, headers, type, doUpdate, defaultLang) => {
-  const name = (nameColumn === -1) ? '' : values[0][nameColumn];
-  const externalId = (externalIdColumn === -1) ? '' : values[0][externalIdColumn];
-  let lang = (langColumn === -1) ? defaultLang : values[0][langColumn];
+const upsertRowData = (rowValues, headers, type, doUpdate, defaultLang) => {
+  const name = (nameColumn === -1) ? '' : rowValues[nameColumn].toString();
+  const externalId = (externalIdColumn === -1) ? '' : rowValues[externalIdColumn].toString();
+  let lang = (langColumn === -1) ? defaultLang : rowValues[langColumn];
   if (lang === '' || lang === undefined) lang = defaultLang;
 
   // Make sure we have some way to identify the item
@@ -205,21 +204,39 @@ const upsertRowData = (values, headers, type, doUpdate, defaultLang) => {
   upsertResult.name = name;
 
   if (!doUpdate) {
-    const newItem = createNewItem(type, name, externalId);
-
-    upsertResult.results.push(`Created new item with ID ${newItem.id}`);
-    upsertResult.updatedExisting = false;
-    updateExistingItem(newItem, externalId, type, headers, values, true, lang);
+    const itemResponse = createNewItem(type, name, externalId);
+    if(itemResponse.code === 201) {
+      // Item success
+      const newItem = itemResponse.data;
+      upsertResult.results.push(`Created new item with ID ${newItem.id}`);
+      upsertResult.updatedExisting = false;
+      updateExistingItem(newItem, externalId, type, headers, rowValues, true, lang);
+    }
+    else {
+      // Item failure
+      upsertResult.errors.push(`Error creating content item: ${itemResponse.data}`);
+      stopProcessing = true;
+      return;
+    }
   }
   else {
     let existingItem = getExistingItem(type, name, externalId);
     if (existingItem === undefined) {
       // No content item - create item, then variant
-      existingItem = createNewItem(type, name, externalId);
-
-      upsertResult.updatedExisting = false;
-      upsertResult.results.push(`Created new item with ID ${existingItem.id}`);
-      updateExistingItem(existingItem, externalId, type, headers, values, true, lang);
+      const itemResponse = createNewItem(type, name, externalId);
+      if(itemResponse.code === 201) {
+        // Item success
+        existingItem = itemResponse.data;
+        upsertResult.updatedExisting = false;
+        upsertResult.results.push(`Created new item with ID ${existingItem.id}`);
+        updateExistingItem(existingItem, externalId, type, headers, rowValues, true, lang);
+      }
+      else {
+        // Item failure
+        upsertResult.errors.push(`Error creating content item: ${itemResponse.data}`);
+        stopProcessing = true;
+        return;
+      }
     }
     else {
       // Content item found
@@ -229,12 +246,12 @@ const upsertRowData = (values, headers, type, doUpdate, defaultLang) => {
       const itemId = (existingItem.id === undefined) ? existingItem.system.id : existingItem.id;
 
       upsertResult.results.push(`Found existing item with ID ${itemId}`);
-      updateExistingItem(existingItem, externalId, type, headers, values, false, lang);
+      updateExistingItem(existingItem, externalId, type, headers, rowValues, false, lang);
     }
   }
 }
 
-const updateExistingItem = (existingItem, externalId, typeCodeName, headers, values, isNew, lang) => {
+const updateExistingItem = (existingItem, externalId, typeCodeName, headers, rowValues, isNew, lang) => {
   if (stopProcessing) {
     return;
   }
@@ -303,7 +320,7 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, headers, val
     for (var k = 0; k < typeElements.length; k++) {
       if (typeElements[k].codename === headers[i]) {
         // Found matching element
-        let value = values[0][i];
+        let value = rowValues[i];
 
         // Element-specific fixes to ensure data is in correct format for upsert
         switch (typeElements[k].type) {
@@ -330,10 +347,15 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, headers, val
             // We manually added this element+value instead of after the switch
             // (or, there was no value and it was skipped) so continue the foreach loop
             continue;
+          case "text":
+
+            // Cell could contain only numbers, convert to string first
+            value = value.toString();
+            break;
           case "number":
 
             // Get currency_format column value
-            const currencyFormat = (currencyFormatColumn === -1) ? 'US' : values[0][currencyFormatColumn];
+            const currencyFormat = (currencyFormatColumn === -1) ? 'US' : rowValues[currencyFormatColumn];
             // Convert number string like '1,000.50' or '1 000,50' to float
             value = tryParseNumber(value, currencyFormat);
             break;
