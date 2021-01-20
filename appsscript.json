@@ -1,23 +1,30 @@
 {
+  "timeZone": "America/New_York",
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/script.locale"
+  ],
+  "urlFetchWhitelist": [
+    "https://manage.kontent.ai/v2/",
+    "https://preview-deliver.kontent.ai/"
+  ],
   "addOns": {
     "common": {
       "name": "Kontent Sheets Import",
       "useLocaleFromApp": true,
       "logoUrl": "https://github.com/Kentico/kontent-google-sheets-add-on/blob/master/img/logo.png?raw=true",
+      "openLinkUrlPrefixes": [
+        "https://github.com/Kentico/"
+      ]
+    },
+    "sheets": {
       "homepageTrigger": {
         "enabled": true,
         "runFunction": "showHomeCard"
       }
-    },
-    "sheets": {
-
     }
-    
-  },
-  
-  "timeZone": "America/New_York",
-  "dependencies": {
-  },
-  "exceptionLogging": "STACKDRIVER",
-  "runtimeVersion": "V8"
+  }
 }

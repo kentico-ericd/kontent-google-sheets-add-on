@@ -6,6 +6,18 @@ let langColumn = -1, nameColumn = -1, externalIdColumn = -1, currencyFormatColum
 // JSON objects for import results: main object for storing all results, single object used in each row
 let resultJSON = { rows: [], stats: {} }, upsertResult = {};
 
+const resetGlobals = () => {
+  apiCounter = 0;
+  itemCounter = 0;
+  variantCounter = 0;
+  errorCounter = 0;
+  langColumn = -1;
+  nameColumn = -1;
+  externalIdColumn = -1;
+  currencyFormatColumn = -1;
+  resultJSON = { rows: [], stats: {} };
+}
+
 const showAlert = (message) => {
   let ui = SpreadsheetApp.getUi();
   ui.alert(
@@ -85,19 +97,10 @@ const makeSheet = (e) => {
 **/
 
 const doImport = (e) => {
+  resetGlobals();
+
   // There's only one input in the form, so if there's any values then it was checked
   let doUpdate = e.commonEventObject.formInputs ? true : false;
-
-  // Reset global vars
-  apiCounter = 0;
-  itemCounter = 0;
-  variantCounter = 0;
-  errorCounter = 0;
-  langColumn = -1;
-  nameColumn = -1;
-  externalIdColumn = -1;
-  currencyFormatColumn = -1;
-  resultJSON = { rows: [], stats: {} };
 
   const sheet = SpreadsheetApp.getActiveSheet();
   const cols = sheet.getLastColumn();
@@ -221,7 +224,11 @@ const upsertRowData = (values, headers, type, doUpdate, defaultLang) => {
     else {
       // Content item found
       upsertResult.updatedExisting = true;
-      upsertResult.results.push(`Found existing item with ID ${existingItem.system.id}`);
+
+      // Response from CM endpoint stores ID in 'id' but Delivery stores it in 'system.id'
+      const itemId = (existingItem.id === undefined) ? existingItem.system.id : existingItem.id;
+
+      upsertResult.results.push(`Found existing item with ID ${itemId}`);
       updateExistingItem(existingItem, externalId, type, headers, values, false, lang);
     }
   }
@@ -399,11 +406,11 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, headers, val
     // Variant failure
     errorCounter++;
     stopProcessing = true;
-    if(response.data.validation_errors) {
-      responseText = response.data.validation_errors[0].message;
+    if(variantResponse.data.validation_errors) {
+      responseText = variantResponse.data.validation_errors[0].message;
     }
     else {
-      responseText = response.data.message;
+      responseText = variantResponse.data.message;
     }
     upsertResult.errors.push(`Error upserting language variant: ${responseText}`);
   }
@@ -462,7 +469,7 @@ const tryFormatDateTime = (elementCodeName, dateTime) => {
       }
       catch (ex) {
         errorCounter++;
-        output.append(`<li>Error parsing date value of element "${elementCodeName}." Skipping element..</li>`);
+        upsertResult.errors.push(`Error parsing date value of element "${elementCodeName}." Skipping element..`);
       }
     }
   }
