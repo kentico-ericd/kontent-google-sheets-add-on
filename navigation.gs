@@ -1,6 +1,8 @@
 const CARD_SETTINGS = 'Project settings',
 CARD_GENERATE = 'Generate sheet',
 CARD_IMPORT = 'Import';
+const KEY_DOUPDATE = 'doupdate_key',
+KEY_DOPRELOAD = 'dopreload_key';
 
 const showHomeCard = () => {
   // Nav buttons
@@ -131,11 +133,20 @@ const makeImportCard = () => {
     .setMultiline(true)
     .setSwitch(CardService.newSwitch()
       .setSelected(true)
-      .setFieldName('doupdate_key')
+      .setFieldName(KEY_DOUPDATE)
+      .setValue('true'));
+  var preloadSwitch = CardService.newKeyValue()
+    .setTopLabel("Preload content items")
+    .setContent("If enabled, all content items will be cached at the start of the import. Depending on the size of the project, this can greatly improve performance and reduce the number of API calls.")
+    .setMultiline(true)
+    .setSwitch(CardService.newSwitch()
+      .setSelected(true)
+      .setFieldName(KEY_DOPRELOAD)
       .setValue('true'));
 
   const section = CardService.newCardSection()
-    .addWidget(updateSwitch);
+    .addWidget(updateSwitch)
+    .addWidget(preloadSwitch);
 
   const fixedFooter = CardService.newFixedFooter()
     .setPrimaryButton(CardService.newTextButton()

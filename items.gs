@@ -2,6 +2,37 @@ const ITEMS_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items
 const ITEM_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/external-id/{external_id}';
 const PREVIEW_ENDPOINT = 'https://preview-deliver.kontent.ai/{project_id}';
 
+const getAllContentItemsDeliver = () => {
+  const keys = loadKeys();
+  // @ts-ignore
+  const url = `${PREVIEW_ENDPOINT.formatUnicorn({project_id: keys.pid})}/items?elements=fakeelementname&depth=0`;
+  const options = {
+    'method': 'get',
+    'contentType': 'application/json',
+    'muteHttpExceptions': true,
+    'headers': {
+      'Authorization': 'Bearer ' + keys.previewkey
+    }
+  };
+
+  apiCounter++;
+  const response = UrlFetchApp.fetch(url, options);
+  if(response.getResponseCode() === 200) {
+    const json = JSON.parse(response.getContentText());
+    return {
+      code: response.getResponseCode(),
+      data: json.items
+    };
+  }
+  else {
+    errorCounter++;
+    return {
+      code: response.getResponseCode(),
+      data: response.getContentText()
+    };
+  }
+}
+
 const createNewItem = (type, name, externalId) => {
   if(stopProcessing) {
     return; 
@@ -81,7 +112,19 @@ const findByName = (name, type) => {
   }
 }
 
-const getExistingItem = (type, name, externalId) => {
-  if(externalId !== '') return findById(externalId);
-  else return findByName(name, type);
+const getExistingItem = (type, name, externalId, usingDeliverCache) => {
+  if(externalId !== '') {
+    // If getting item by externalId, we have to make a MAPI request (unless we cache all items from MAPI..)
+    return findById(externalId);
+  }
+  else {
+    // If not using externalId we can check cache
+    if(usingDeliverCache) {
+      return contentItemCache.filter(i => i.system.name === name)[0];
+    }
+    else {
+      // Make Deliver request
+      return findByName(name, type);
+    }
+  }
 }

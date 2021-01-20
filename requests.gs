@@ -1,5 +1,5 @@
 /**
-** Executes a GET request against the passed endpoint after applying the ProjectID to the URL, then other passed parameters.
+** Executes a GET request against the passed MAPI endpoint after applying the ProjectID to the URL, then other passed parameters.
 ** Automatically increments the apiCounter variable
 **/
 const executeGetRequest = (endpoint, args) => {
@@ -20,7 +20,7 @@ const executeGetRequest = (endpoint, args) => {
 }
 
 /**
-** Executes a request with payload against the passed endpoint after applying the ProjectID to the URL, then other passed parameters.
+** Executes a request with payload against the passed MAPI endpoint after applying the ProjectID to the URL, then other passed parameters.
 ** Data passed to the function will automatically be stringified.
 ** Automatically increments the apiCounter variable.
 **/

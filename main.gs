@@ -6,6 +6,8 @@ let publishedWorkflowStepId, draftWorkflowStepId;
 let langColumn = -1, nameColumn = -1, externalIdColumn = -1, currencyFormatColumn = -1;
 // JSON objects for import results: main object for storing all results, single object used in each row
 let resultJSON = { rows: [], stats: {} }, upsertResult = {};
+// Content item cache- ALL content items in project!
+let contentItemCache = {};
 
 const resetGlobals = () => {
   startTime = new Date();
@@ -18,6 +20,7 @@ const resetGlobals = () => {
   externalIdColumn = -1;
   currencyFormatColumn = -1;
   resultJSON = { rows: [], stats: {} };
+  contentItemCache = {};
 }
 
 const showAlert = (message) => {
@@ -69,8 +72,12 @@ const makeResultSheet = (e) => {
   resultJSON.rows.forEach(row => {
     const errors = row.errors ? row.errors.join(', ') : '';
     const successes = row.results ? row.results.join(', ') : '';
-    values.push([row.row, row.name, !row.updatedExisting.toString().toLowerCase(), errors, successes]);
+    values.push([row.row, row.name, !row.updatedExisting, errors, successes]);
   });
+
+  // Formatting
+  newSheet.setColumnWidth(4, 200);
+  newSheet.setColumnWidth(5, 200);
 
   const range = newSheet.getRange(1,1, values.length, 5); // Increase last param if more columns are added
   range.setValues(values);
@@ -111,8 +118,12 @@ const makeSheet = (e) => {
 const doImport = (e) => {
   resetGlobals();
 
-  // There's only one input in the form, so if there's any values then it was checked
-  let doUpdate = e.commonEventObject.formInputs ? true : false;
+  // Get form values from Import menu
+  let doUpdate = false, doPreload = false;
+  if(e.commonEventObject.formInputs) {
+    doUpdate = e.commonEventObject.formInputs[KEY_DOUPDATE] ? true : false;
+    doPreload = e.commonEventObject.formInputs[KEY_DOPRELOAD] ? true : false;
+  }
 
   // Get ALL values from sheet
   const sheet = SpreadsheetApp.getActiveSheet();
@@ -175,7 +186,20 @@ const doImport = (e) => {
       });
     }
     else {
-      return 'Failed to load workflow steps: ' + stepResponse.data;
+      showAlert(`Failed to load workflow steps: ${stepResponse.data}`);
+      return;
+    }
+  }
+
+  // Load all content items into cache if enabled
+  if(doPreload) {
+    itemsResponse = getAllContentItemsDeliver();
+    if(itemsResponse.code === 200) {
+      contentItemCache = itemsResponse.data;
+    }
+    else {
+      // Couldn't load items for some reason.. disable preload
+      doPreload = false;
     }
   }
 
@@ -185,7 +209,7 @@ const doImport = (e) => {
     // Increase k by 1 because values[] is 0-based but Sheet row numbers start at 1
     upsertResult = { "row": k + 1, "name": "", updatedExisting: false, "errors": [], "results": [] };
 
-    upsertRowData(values[k], headers, type, doUpdate, defaultLang);
+    upsertRowData(values[k], headers, type, doUpdate, doPreload, defaultLang);
 
     // Add result json object to sheet result object
     resultJSON.rows.push(upsertResult);
@@ -200,7 +224,7 @@ const doImport = (e) => {
   makeResultSheet(e);
 }
 
-const upsertRowData = (rowValues, headers, type, doUpdate, defaultLang) => {
+const upsertRowData = (rowValues, headers, type, doUpdate, usingDeliverCache, defaultLang) => {
   const name = (nameColumn === -1) ? '' : rowValues[nameColumn].toString();
   const externalId = (externalIdColumn === -1) ? '' : rowValues[externalIdColumn].toString();
   let lang = (langColumn === -1) ? defaultLang : rowValues[langColumn];
@@ -221,7 +245,6 @@ const upsertRowData = (rowValues, headers, type, doUpdate, defaultLang) => {
       // Item success
       const newItem = itemResponse.data;
       upsertResult.results.push(`Created new item with ID ${newItem.id}`);
-      upsertResult.updatedExisting = false;
 
       updateExistingItem(newItem, externalId, type, headers, rowValues, true, lang);
     }
@@ -233,14 +256,13 @@ const upsertRowData = (rowValues, headers, type, doUpdate, defaultLang) => {
     }
   }
   else {
-    let existingItem = getExistingItem(type, name, externalId);
+    let existingItem = getExistingItem(type, name, externalId, usingDeliverCache);
     if (existingItem === undefined) {
       // No content item - create item, then variant
       const itemResponse = createNewItem(type, name, externalId);
       if(itemResponse.code === 201) {
         // Item success
         existingItem = itemResponse.data;
-        upsertResult.updatedExisting = false;
         upsertResult.results.push(`Created new item with ID ${existingItem.id}`);
         updateExistingItem(existingItem, externalId, type, headers, rowValues, true, lang);
       }
