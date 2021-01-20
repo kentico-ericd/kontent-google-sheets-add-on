@@ -45,23 +45,26 @@ const makeResultSheet = (e) => {
   //const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const newSheet = ss.insertSheet(`Import log: ${new Date().toUTCString()}`);
+  const values = [];
 
-  // Add stats
-  newSheet.appendRow(['Content type:', resultJSON.stats.type]);
-  newSheet.appendRow(['Total API Calls:', resultJSON.stats.apiCounter]);
-  newSheet.appendRow(['New content items:', resultJSON.stats.itemCounter]);
-  newSheet.appendRow(['Language variants updated:', resultJSON.stats.variantCounter]);
-  newSheet.appendRow(['Total Errors:', resultJSON.stats.errorCounter]);
-  newSheet.appendRow([' ']);
-  newSheet.appendRow(['Row', 'Name', 'Created new item', 'Errors', 'Successes']);
+  // Add stats (remember to fill empty cols with a value)
+  values.push(['Content type:', resultJSON.stats.type, '', '', '']);
+  values.push(['Total API Calls:', resultJSON.stats.apiCounter, '', '', '']);
+  values.push(['New content items:', resultJSON.stats.itemCounter, '', '', '']);
+  values.push(['Language variants updated:', resultJSON.stats.variantCounter, '', '', '']);
+  values.push(['Total Errors:', resultJSON.stats.errorCounter, '', '', '']);
+  values.push(['', '', '', '', '']);
+  values.push(['Row', 'Name', 'Created new item', 'Errors', 'Successes']);
 
   // Loop through individual import records
   resultJSON.rows.forEach(row => {
     const errors = row.errors ? row.errors.join(', ') : '';
     const successes = row.results ? row.results.join(', ') : '';
-    newSheet.appendRow([row.row, row.name, !row.updatedExisting.toString().toLowerCase(), errors, successes]);
+    values.push([row.row, row.name, !row.updatedExisting.toString().toLowerCase(), errors, successes]);
   });
 
+  const range = newSheet.getRange(1,1, values.length, 5); // Increase last param if more columns are added
+  range.setValues(values);
   newSheet.activate();
 }
 
