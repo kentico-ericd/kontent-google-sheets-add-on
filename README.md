@@ -3,11 +3,11 @@
 # ![Sheets](https://www.google.com/images/about/sheets-icon.svg) Google Sheets Import
 
 # Installation
-Install from the G-Suite Marketplace [here](https://gsuite.google.com/marketplace/app/kentico_kontent/482429381322). Once installed, a new _Kentico Kontent_ menu will appear in the _Add-ons_ menu in Google Sheets:
+You can install this Google Workspace Add-on directly from Google Sheets using this button in the sidebar:
 
-![Menu](img/addon.png)
+![Install](img/install.png)
 
-After installing, locate the following keys in http://app.kontent.ai and add them to the add-on's _Configure_ menu:
+After installing, click the Kontent icon in the sidebar to load the Add-on's home page. Locate the following API keys in Kontent, then add them in the Addon's __Project settings__ menu, 
 
 - Project ID
 - Preview API key
@@ -17,7 +17,7 @@ After installing, locate the following keys in http://app.kontent.ai and add the
 A supplemental Kontent blog post containing usage details and examples can be found [here](https://kontent.ai/blog/migrating-content-from-spreadsheets).
 
 ## Preparing the Sheet
-You may create a new Sheet or edit an existing one. The _Generate_ menu of the add-on can also generate a new Sheet for you, along with the required headers, based on the project's content types.
+You may create a new Sheet or edit an existing one. The __Generate Sheet__ menu of the Add-on can also generate a new Sheet for you, along with the required headers, based on the project's content types.
 
 If you have a local spreadsheet file, you can open it in Google Sheets by uploading it to Google Drive, then selecting _Open with > Google Sheets_.
 
@@ -31,14 +31,14 @@ Ensure that the __name__ of the Sheet matches the code name of the content type 
 
 ## Setting the headers
 
-The headers (first row) of your Sheet must contain the code names of the content type's elements. If you use the _Generate_ menu of the add-on, these headers will be automatically generated. If adding headers manually, you can find the code names of the elements when editing the content type in https://app.kontent.ai.
+The headers (first row) of your Sheet must contain the code names of the content type's elements. If you use the __Generate Sheet__ menu of the Add-on, these headers will be automatically generated. If adding headers manually, you can find the code names of the elements when editing the content type in https://app.kontent.ai.
 
 ![Code names](img/codename.png)
 
 In addition to the element code names, the header row should also contain 3 other headers:
 
 - __name__ (required): The name of the content item to create or update.
-- __external_id__ (optional): The [external](https://docs.kontent.ai/reference/management-api-v2#section/External-IDs-for-imported-content) ID of the content item to update (overrides name header).
+- __external_id__ (optional): The [external ID](https://docs.kontent.ai/reference/management-api-v2#section/External-IDs-for-imported-content) of the content item to update (overrides name header).
 - __language__ (optional): The language of the variant to update. This should match the code name of a language in the project’s Localization page, and is case sensitive. If a language is not provided, the add-on will get the project's default language using Management API.
 - __currency_format__ (optional): Used to determine how values for Kontent "number" elements are parsed. US-formatted strings ("1,500.75") and EU-formatted strings ("1 500,75") are parsed into a valid number based on this setting. Should be either `US` or `EU`. If omitted or empty, US formatting will be used.
 
@@ -74,19 +74,15 @@ Or, you can use special macros designed for this add-on. In the list below, the 
 - __Linked Items__: The value of this cell is the same as Assets. It should be a comma-separated list of items in the format `<identifier type>:<identifier>`. You can use _id_, _external_id_, or _codename_ to reference content items, for example: `codename:birthday_party,id:eba1015a-dfd4-5736-abc1-5de3ed5df732`.
 
 ## Importing the Content
-Open the _Add-ons > Kentico Kontent > Import_ menu. You have 2 choices:
+Click the Kontent icon in the sidebar and open the __Import__ menu. There is a switch which determines how content items are imported:
 
-- Update existing, create if not found
-- Always create new
+![Import options](/img/import.png)
 
-If you choose the first option, an existing content item will attempt to be updated using the `external_id` of each row, or the `name` if there is no external ID column. If you choose the second option, a new item will always be created, but be aware that you may run into errors if you’ve provided an external ID that already exists in the system. As is the case with all errors, the script will simply skip that record and continue processing the rest of the Sheet.
+If enabled, an existing content item will attempt to be updated using the `external_id` of each row, or the `name` if there is no external ID column. If you disable it, a new item will always be created, but be aware that you may run into errors if you’ve provided an external ID that already exists in the system. As is the case with all errors, the script will simply skip that record and continue processing the rest of the Sheet.
 
-After clicking the __Import__ button, please wait while the script runs. When it’s finished, a new window will open up containing a detailed record of the operations taken per-row, as well as the total number of:
+After clicking the __Run__ button, please wait while the script runs. When it’s finished, a new window Sheet is created containing a detailed record of the operations taken per-row and general information:
 
-- API calls made
-- New content items created
-- Language variants upserted
-- Errors
+![Import log](/img/log.png)
 
 # Contributing
 To develop and test this Google Script project, first install [this Chrome extension](https://chrome.google.com/webstore/detail/google-apps-script-github/lfjcgcmkmjjlieihflfhjopckgpelofo?hl=en) which integrates Google Scripts with Git. Then fork this repository and create a new Google Script project on https://script.google.com/.
