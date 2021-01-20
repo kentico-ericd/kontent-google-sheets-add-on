@@ -78,11 +78,15 @@ Or, you can use special macros designed for this add-on. In the list below, the 
 - __Linked Items__: The value of this cell is the same as Assets. It should be a comma-separated list of items in the format `<identifier type>:<identifier>`. You can use _id_, _external_id_, or _codename_ to reference content items, for example: `codename:birthday_party,id:eba1015a-dfd4-5736-abc1-5de3ed5df732`.
 
 ## Importing the Content
-Click the Kontent icon in the sidebar and open the __Import__ menu. There is a switch which determines how content items are imported:
+Click the Kontent icon in the sidebar and open the __Import__ menu. You have two options before starting the import:
 
 ![Import options](/img/import.png)
 
+- __Update existing items__:
 If enabled, an existing content item will attempt to be updated using the `external_id` of each row, or the `name` if there is no external ID column. If you disable it, a new item will always be created, but be aware that you may run into errors if you’ve provided an external ID that already exists in the system. As is the case with all errors, the script will simply skip that record and continue processing the rest of the Sheet.
+
+- __Preload content items__: If enabled, the script will load _all_ content items from your project at the start. When attempting to locate existing items, the script will use the cached data, greatly reducing the number of API calls and execution time.  
+Note: Currently, this only works when locating items by name. When utilizing the `external_id` column, a request will be made to the Management API.
 
 After clicking the __Run__ button, please wait while the script runs. When it’s finished, a new window Sheet is created containing a detailed record of the operations taken per-row and general information:
 
