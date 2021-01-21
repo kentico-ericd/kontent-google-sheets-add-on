@@ -1,5 +1,3 @@
-const VARIANT_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/{item_identifier}/variants/codename/{language_codename}';
-
 const createNewVersion = (itemId, lang) => {
   if(stopProcessing) {
     return; 

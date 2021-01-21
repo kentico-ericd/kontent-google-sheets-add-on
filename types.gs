@@ -1,7 +1,3 @@
-const TYPES_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/types';
-const TYPE_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/types/codename/{code_name}';
-const SNIPPET_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/snippets/{snippet_identifier}';
-
 const getType = (codename) => {
   const response = executeGetRequest(TYPE_ENDPOINT, {code_name: codename});
   if(response.getResponseCode() === 200) {
@@ -48,7 +44,7 @@ const getSnippetElements = (id) => {
     // Failure
     return {
       'code': response.getResponseCode(),
-      'data': JSON.parse(response.getContentText().message)
+      'data': JSON.parse(response.getContentText()).message
     }
   }
 }

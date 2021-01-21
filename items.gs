@@ -1,28 +1,42 @@
-const ITEMS_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items';
-const ITEM_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/external-id/{external_id}';
-const PREVIEW_ENDPOINT = 'https://preview-deliver.kontent.ai/{project_id}';
-
-const getAllContentItemsDeliver = () => {
+const getAllContentItems = () => {
+  const allItems = [];
   const keys = loadKeys();
-  // @ts-ignore
-  const url = `${PREVIEW_ENDPOINT.formatUnicorn({project_id: keys.pid})}/items?elements=fakeelementname&depth=0`;
-  const options = {
-    'method': 'get',
-    'contentType': 'application/json',
-    'muteHttpExceptions': true,
-    'headers': {
-      'Authorization': 'Bearer ' + keys.previewkey
-    }
-  };
-
-  apiCounter++;
-  const response = UrlFetchApp.fetch(url, options);
+  let response = executeGetRequest(ITEMS_ENDPOINT);
   if(response.getResponseCode() === 200) {
-    const json = JSON.parse(response.getContentText());
-    return {
-      code: response.getResponseCode(),
-      data: json.items
-    };
+    let json = JSON.parse(response.getContentText());
+    allItems.push(...json.items);
+
+    // Check if there are more items to get
+    while(json.pagination.continuation_token) {
+      
+      const token = json.pagination.continuation_token;
+      const url = json.pagination.next_page;
+      const options = {
+        'method': 'get',
+        'contentType': 'application/json',
+        'muteHttpExceptions': true,
+        'headers': {
+          'Authorization': 'Bearer ' + keys.cmkey,
+          'x-continuation': token
+        }
+      }
+
+      apiCounter++;
+      response = UrlFetchApp.fetch(url, options);
+      if(response.getResponseCode() === 200) {
+
+        // Add items to list and continue loop
+        json = JSON.parse(response.getContentText());
+        allItems.push(...json.items);
+      }
+      else {
+        errorCounter++;
+        return {
+          code: response.getResponseCode(),
+          data: response.getContentText()
+        };
+      }
+    }
   }
   else {
     errorCounter++;
@@ -30,6 +44,12 @@ const getAllContentItemsDeliver = () => {
       code: response.getResponseCode(),
       data: response.getContentText()
     };
+  }
+
+  // Finished loop without error, return all items
+  return {
+    code: 200,
+    data: allItems
   }
 }
 
@@ -112,15 +132,19 @@ const findByName = (name, type) => {
   }
 }
 
-const getExistingItem = (type, name, externalId, usingDeliverCache) => {
+const getExistingItem = (type, name, externalId) => {
   if(externalId !== '') {
-    // If getting item by externalId, we have to make a MAPI request (unless we cache all items from MAPI..)
-    return findById(externalId);
+    if(doPreload) {
+      return contentItemCache.filter(i => i.external_id && i.external_id === externalId)[0];
+    }
+    else {
+      // Make MAPI request
+      return findById(externalId);
+    }
   }
   else {
-    // If not using externalId we can check cache
-    if(usingDeliverCache) {
-      return contentItemCache.filter(i => i.system.name === name)[0];
+    if(doPreload) {
+      return contentItemCache.filter(i => i.name === name)[0];
     }
     else {
       // Make Deliver request

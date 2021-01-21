@@ -13,7 +13,7 @@ const executeGetRequest = (endpoint, args) => {
     'headers': {
       'Authorization': 'Bearer ' + keys.cmkey
     }
-  };
+  }
 
   apiCounter++;
   return UrlFetchApp.fetch(url, options);

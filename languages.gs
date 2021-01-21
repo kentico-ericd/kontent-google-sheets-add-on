@@ -1,5 +1,3 @@
-const LANGUAGES_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/languages';
-
 const getDefaultLanguage = () => {
   const response = executeGetRequest(LANGUAGES_ENDPOINT);
   if(response.getResponseCode() === 200) {

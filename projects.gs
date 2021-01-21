@@ -1,5 +1,3 @@
-const PROJECT_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}';
-
 const getProjectInfo = (pid) => {
   const response = executeGetRequest(PROJECT_ENDPOINT, {project_id: pid});
   if(response.getResponseCode() === 200) {

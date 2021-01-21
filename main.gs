@@ -1,114 +1,3 @@
-// Import variables
-let startTime;
-let apiCounter = 0, itemCounter = 0, variantCounter = 0, errorCounter = 0;
-let stopProcessing = false;
-let publishedWorkflowStepId, draftWorkflowStepId;
-let langColumn = -1, nameColumn = -1, externalIdColumn = -1, currencyFormatColumn = -1;
-// JSON objects for import results: main object for storing all results, single object used in each row
-let resultJSON = { rows: [], stats: {} }, upsertResult = {};
-// Content item cache- ALL content items in project!
-let contentItemCache = {};
-
-const resetGlobals = () => {
-  startTime = new Date();
-  apiCounter = 0;
-  itemCounter = 0;
-  variantCounter = 0;
-  errorCounter = 0;
-  langColumn = -1;
-  nameColumn = -1;
-  externalIdColumn = -1;
-  currencyFormatColumn = -1;
-  resultJSON = { rows: [], stats: {} };
-  contentItemCache = {};
-}
-
-const showAlert = (message) => {
-  let ui = SpreadsheetApp.getUi();
-  ui.alert(
-    'Error',
-    message,
-    ui.ButtonSet.OK);
-}
-
-const loadKeys = () => {
-  const pid = PropertiesService.getUserProperties().getProperty('pid');
-  const cmkey = PropertiesService.getUserProperties().getProperty('cmkey');
-  const previewkey = PropertiesService.getUserProperties().getProperty('previewkey');
-  return { "pid": pid, "cmkey": cmkey, "previewkey": previewkey };
-}
-
-/**
------------------------------------------------
-  Sheet functions
------------------------------------------------
-**/
-
-const makeResultSheet = (e) => {
-  //TODO: locale not working- returns "en" not "en-US"
-  //const locale = e.commonEventObject.userLocale;
-  //const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const newSheet = ss.insertSheet(`Import log: ${new Date().toUTCString()}`);
-  const values = [];
-
-  // Get import duration
-  const endTime = new Date();
-  // @ts-ignore
-  let duration = endTime - startTime;
-  duration /= 1000;
-
-  // Add stats (remember to fill empty cols with a value)
-  values.push(['Content type:', resultJSON.stats.type, '', '', '']);
-  values.push(['Seconds elapsed:', duration, '', '', '']);
-  values.push(['Total API Calls:', resultJSON.stats.apiCounter, '', '', '']);
-  values.push(['New content items:', resultJSON.stats.itemCounter, '', '', '']);
-  values.push(['Language variants updated:', resultJSON.stats.variantCounter, '', '', '']);
-  values.push(['Total Errors:', resultJSON.stats.errorCounter, '', '', '']);
-  values.push(['', '', '', '', '']);
-  values.push(['Row', 'Name', 'Created new item', 'Errors', 'Successes']);
-
-  // Loop through individual import records
-  resultJSON.rows.forEach(row => {
-    const errors = row.errors ? row.errors.join(', ') : '';
-    const successes = row.results ? row.results.join(', ') : '';
-    values.push([row.row, row.name, !row.updatedExisting, errors, successes]);
-  });
-
-  // Formatting
-  newSheet.setColumnWidth(4, 200);
-  newSheet.setColumnWidth(5, 200);
-
-  const range = newSheet.getRange(1,1, values.length, 5); // Increase last param if more columns are added
-  range.setValues(values);
-  newSheet.activate();
-}
-
-const makeSheet = (e) => {
-  const type = JSON.parse(e.commonEventObject.parameters.json);
-
-  // Check if sheet with code name already exists
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(type.codename);
-  if (sheet != null) {
-    showAlert('A sheet already exists with this content type code name.');
-    return;
-  }
-
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const newSheet = ss.insertSheet(type.codename);
-  const elements = getTypeElements(type);
-
-  // Generate headers
-  const range = newSheet.getRange(1, 1, 1, elements.length + 3);
-  range.getCell(1, 1).setValue("name");
-  range.getCell(1, 2).setValue("external_id");
-  range.getCell(1, 3).setValue("currency_format").setNote('Set this to "US" (or leave empty) for numbers formatted like "1,000.50" or "EU" for "1 000,50" formatting.');
-
-  for (var i = 0; i < elements.length; i++) {
-    range.getCell(1, i + 4).setValue(elements[i].codename);
-  }
-}
-
 /**
 -----------------------------------------------
   Import functions
@@ -119,7 +8,6 @@ const doImport = (e) => {
   resetGlobals();
 
   // Get form values from Import menu
-  let doUpdate = false, doPreload = false;
   if(e.commonEventObject.formInputs) {
     doUpdate = e.commonEventObject.formInputs[KEY_DOUPDATE] ? true : false;
     doPreload = e.commonEventObject.formInputs[KEY_DOPRELOAD] ? true : false;
@@ -136,7 +24,6 @@ const doImport = (e) => {
   }
 
   // Get all header values
-  const headers = [];
   for (var i = 0; i < values[0].length; i++) {
     const value = values[0][i].toString().toLowerCase();
     switch (value) {
@@ -162,14 +49,10 @@ const doImport = (e) => {
     return;
   }
 
-  // Get default lang of project or use the "default" language in new projects
+  // Get default lang of project- if fails, we use "default"
   const langResponse = getDefaultLanguage();
-  let defaultLang;
   if (langResponse.code === 200) {
     defaultLang = langResponse.data.codename;
-  }
-  else {
-    defaultLang = 'default';
   }
 
   if (doUpdate) {
@@ -193,12 +76,13 @@ const doImport = (e) => {
 
   // Load all content items into cache if enabled
   if(doPreload) {
-    itemsResponse = getAllContentItemsDeliver();
+    const itemsResponse = getAllContentItems();
     if(itemsResponse.code === 200) {
       contentItemCache = itemsResponse.data;
     }
     else {
       // Couldn't load items for some reason.. disable preload
+      showAlert(`Couldn't load content items for cache: ${itemsResponse.data}... continuing without cache`);
       doPreload = false;
     }
   }
@@ -209,7 +93,7 @@ const doImport = (e) => {
     // Increase k by 1 because values[] is 0-based but Sheet row numbers start at 1
     upsertResult = { "row": k + 1, "name": "", updatedExisting: false, "errors": [], "results": [] };
 
-    upsertRowData(values[k], headers, type, doUpdate, doPreload, defaultLang);
+    upsertRowData(values[k], type);
 
     // Add result json object to sheet result object
     resultJSON.rows.push(upsertResult);
@@ -224,7 +108,7 @@ const doImport = (e) => {
   makeResultSheet(e);
 }
 
-const upsertRowData = (rowValues, headers, type, doUpdate, usingDeliverCache, defaultLang) => {
+const upsertRowData = (rowValues, type) => {
   const name = (nameColumn === -1) ? '' : rowValues[nameColumn].toString();
   const externalId = (externalIdColumn === -1) ? '' : rowValues[externalIdColumn].toString();
   let lang = (langColumn === -1) ? defaultLang : rowValues[langColumn];
@@ -246,7 +130,7 @@ const upsertRowData = (rowValues, headers, type, doUpdate, usingDeliverCache, de
       const newItem = itemResponse.data;
       upsertResult.results.push(`Created new item with ID ${newItem.id}`);
 
-      updateExistingItem(newItem, externalId, type, headers, rowValues, true, lang);
+      updateExistingItem(newItem, externalId, type, rowValues, true, lang);
     }
     else {
       // Item failure
@@ -256,7 +140,7 @@ const upsertRowData = (rowValues, headers, type, doUpdate, usingDeliverCache, de
     }
   }
   else {
-    let existingItem = getExistingItem(type, name, externalId, usingDeliverCache);
+    let existingItem = getExistingItem(type, name, externalId);
     if (existingItem === undefined) {
       // No content item - create item, then variant
       const itemResponse = createNewItem(type, name, externalId);
@@ -264,7 +148,7 @@ const upsertRowData = (rowValues, headers, type, doUpdate, usingDeliverCache, de
         // Item success
         existingItem = itemResponse.data;
         upsertResult.results.push(`Created new item with ID ${existingItem.id}`);
-        updateExistingItem(existingItem, externalId, type, headers, rowValues, true, lang);
+        updateExistingItem(existingItem, externalId, type, rowValues, true, lang);
       }
       else {
         // Item failure
@@ -281,12 +165,12 @@ const upsertRowData = (rowValues, headers, type, doUpdate, usingDeliverCache, de
       const itemId = (existingItem.id === undefined) ? existingItem.system.id : existingItem.id;
 
       upsertResult.results.push(`Found existing item with ID ${itemId}`);
-      updateExistingItem(existingItem, externalId, type, headers, rowValues, false, lang);
+      updateExistingItem(existingItem, externalId, type, rowValues, false, lang);
     }
   }
 }
 
-const updateExistingItem = (existingItem, externalId, typeCodeName, headers, rowValues, isNew, lang) => {
+const updateExistingItem = (existingItem, externalId, typeCodeName, rowValues, isNew, lang) => {
   if (stopProcessing) {
     return;
   }
@@ -475,81 +359,79 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, headers, row
 
 /**
 -----------------------------------------------
-  JS functions
+  Sheet functions
 -----------------------------------------------
 **/
 
-// Format can be 'US' or 'EU'
-const tryParseNumber = (number, format) => {
-
-  number = number.toString().trim();
-  switch (format) {
-    case 'US':
-
-      // At the moment, no processing seems to be needed
-      // Strings like '1,000.50' are already accepted by Kontent
-      break;
-    case 'EU':
-
-      // Remove inner spaces and dots
-      number = number.replace(/\s/g, '').replace(/\./g, '');
-      // Replace comma with decimal
-      number = number.replace(/\,/g, '.');
-      break;
-  }
-
-  return number;
+const showAlert = (message) => {
+  let ui = SpreadsheetApp.getUi();
+  ui.alert(
+    'Error',
+    message,
+    ui.ButtonSet.OK);
 }
 
-// Currently doesn't work for dd/mm/yy
-const tryFormatDateTime = (elementCodeName, dateTime) => {
-  let date = new Date(dateTime);
-  let ret = '';
+const makeResultSheet = (e) => {
+  //TODO: locale not working- returns "en" not "en-US"
+  //const locale = e.commonEventObject.userLocale;
+  //const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const newSheet = ss.insertSheet(`Import log: ${new Date().toUTCString()}`);
+  const values = [];
 
-  try {
-    ret = date.toISOString();
-  }
-  catch (e) {
-    // First failure, could be SQL time like 2017-01-10 15:46:54.5576119
-    const t = dateTime.split(/[- :]/);
-    date = new Date(Date.UTC(t[0], t[1] - 1, t[2], t[3], t[4], t[5]));
+  // Get import duration
+  const endTime = new Date();
+  // @ts-ignore
+  let duration = endTime - startTime;
+  duration /= 1000;
 
-    try {
-      ret = date.toISOString();
-    }
-    catch (e) {
-      // Second failure, could be in format like 11-5-2019, try replace
-      dateTime = dateTime.replace(/-/gi, '/');
-      date = new Date(dateTime);
-      try {
-        ret = date.toISOString();
-      }
-      catch (ex) {
-        errorCounter++;
-        upsertResult.errors.push(`Error parsing date value of element "${elementCodeName}." Skipping element..`);
-      }
-    }
-  }
+  // Add stats (remember to fill empty cols with a value)
+  values.push(['Content type:', resultJSON.stats.type, '', '', '']);
+  values.push(['Seconds elapsed:', duration, '', '', '']);
+  values.push(['Total API Calls:', resultJSON.stats.apiCounter, '', '', '']);
+  values.push(['New content items:', resultJSON.stats.itemCounter, '', '', '']);
+  values.push(['Language variants updated:', resultJSON.stats.variantCounter, '', '', '']);
+  values.push(['Total Errors:', resultJSON.stats.errorCounter, '', '', '']);
+  values.push(['', '', '', '', '']);
+  values.push(['Row', 'Name', 'Created new item', 'Errors', 'Successes']);
 
-  return ret;
+  // Loop through individual import records
+  resultJSON.rows.forEach(row => {
+    const errors = row.errors ? row.errors.join(', ') : '';
+    const successes = row.results ? row.results.join(', ') : '';
+    values.push([row.row, row.name, !row.updatedExisting, errors, successes]);
+  });
+
+  // Formatting
+  newSheet.setColumnWidth(4, 200);
+  newSheet.setColumnWidth(5, 200);
+
+  const range = newSheet.getRange(1,1, values.length, 5); // Increase last param if more columns are added
+  range.setValues(values);
+  newSheet.activate();
 }
 
-// @ts-ignore
-String.prototype.formatUnicorn = String.prototype.formatUnicorn ||
-  function () {
-    "use strict";
-    let str = this.toString();
-    if (arguments.length) {
-      const t = typeof arguments[0];
-      const args = ("string" === t || "number" === t) ?
-        Array.prototype.slice.call(arguments)
-        : arguments[0];
+const makeSheet = (e) => {
+  const type = JSON.parse(e.commonEventObject.parameters.json);
 
-      let key;
-      for (key in args) {
-        str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), args[key]);
-      }
-    }
+  // Check if sheet with code name already exists
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(type.codename);
+  if (sheet != null) {
+    showAlert('A sheet already exists with this content type code name.');
+    return;
+  }
 
-    return str;
-  };
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const newSheet = ss.insertSheet(type.codename);
+  const elements = getTypeElements(type);
+
+  // Generate headers
+  const range = newSheet.getRange(1, 1, 1, elements.length + 3);
+  range.getCell(1, 1).setValue("name");
+  range.getCell(1, 2).setValue("external_id");
+  range.getCell(1, 3).setValue("currency_format").setNote('Set this to "US" (or leave empty) for numbers formatted like "1,000.50" or "EU" for "1 000,50" formatting.');
+
+  for (var i = 0; i < elements.length; i++) {
+    range.getCell(1, i + 4).setValue(elements[i].codename);
+  }
+}
