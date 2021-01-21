@@ -50,7 +50,7 @@ const getSnippetElements = (id) => {
 }
 
 /**
-** Gets type elements and expands on snippet elements to include in the resulting array
+* Gets type elements and expands on snippet elements to include in the resulting array
 **/
 const getTypeElements = (type) => {
   const elements = [];

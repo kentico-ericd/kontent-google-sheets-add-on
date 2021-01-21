@@ -11,7 +11,7 @@ const getWorkflowSteps = () => {
     // Failure
     return {
       'code': response.getResponseCode(),
-      'data': JSON.parse(response.getContentText().message)
+      'data': JSON.parse(response.getContentText()).message
     }
   }
 }

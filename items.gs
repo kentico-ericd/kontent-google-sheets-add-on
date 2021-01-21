@@ -22,7 +22,7 @@ const getAllContentItems = () => {
       }
 
       apiCounter++;
-      response = UrlFetchApp.fetch(url, options);
+      response = execute(url, options);
       if(response.getResponseCode() === 200) {
 
         // Add items to list and continue loop
@@ -125,7 +125,7 @@ const findByName = (name, type) => {
   };
 
   apiCounter++;
-  const response = UrlFetchApp.fetch(url, options);
+  const response = execute(url, options);
   if(response.getResponseCode() === 200) {
     const json = JSON.parse(response.getContentText());
     if(json.items.length > 0) return json.items[0];

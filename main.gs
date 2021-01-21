@@ -388,6 +388,7 @@ const makeResultSheet = (e) => {
   // Add stats (remember to fill empty cols with a value)
   values.push(['Content type:', resultJSON.stats.type, '', '', '']);
   values.push(['Seconds elapsed:', duration, '', '', '']);
+  values.push(['Seconds spent throttled:', waitTimes/1000, '', '', '']);
   values.push(['Total API Calls:', resultJSON.stats.apiCounter, '', '', '']);
   values.push(['New content items:', resultJSON.stats.itemCounter, '', '', '']);
   values.push(['Language variants updated:', resultJSON.stats.variantCounter, '', '', '']);

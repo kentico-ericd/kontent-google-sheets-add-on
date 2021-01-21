@@ -21,6 +21,7 @@ let stopProcessing = false;
 let publishedWorkflowStepId, draftWorkflowStepId;
 let langColumn = -1, nameColumn = -1, externalIdColumn = -1, currencyFormatColumn = -1;
 let doUpdate = false, doPreload = false;
+let waitTimes = 0;
 
 // JSON objects for import results: main object for storing all results, single object used in each row
 let resultJSON = { rows: [], stats: {} }, upsertResult = {};
@@ -58,4 +59,5 @@ const resetGlobals = () => {
   currencyFormatColumn = -1;
   resultJSON = { rows: [], stats: {} };
   contentItemCache = {};
+  waitTimes = 0;
 }

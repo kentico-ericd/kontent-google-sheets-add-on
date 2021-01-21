@@ -1,6 +1,27 @@
 /**
-** Executes a GET request against the passed MAPI endpoint after applying the ProjectID to the URL, then other passed parameters.
-** Automatically increments the apiCounter variable
+ * Executes a request with implemented throttling.
+ */
+const execute = (url, options) => {
+  apiCounter++;
+  let response = UrlFetchApp.fetch(url, options);
+  if(response.getResponseCode() === 429) {
+
+    // API limit exceeded, wait and retry
+    let waitTime = response.getHeaders()["Retry-After"];
+    // Time is in seconds, convert to ms
+    waitTime *= 1000;
+    waitTimes += waitTime;
+    Utilities.sleep(waitTime);
+
+    return execute(url, options);
+  }
+
+  return response;
+}
+
+/**
+* Executes a GET request against the passed MAPI endpoint after applying the ProjectID to the URL, then other passed parameters.
+* Automatically increments the apiCounter variable
 **/
 const executeGetRequest = (endpoint, args) => {
   const keys = loadKeys();
@@ -15,14 +36,13 @@ const executeGetRequest = (endpoint, args) => {
     }
   }
 
-  apiCounter++;
-  return UrlFetchApp.fetch(url, options);
+  return execute(url, options);
 }
 
 /**
-** Executes a request with payload against the passed MAPI endpoint after applying the ProjectID to the URL, then other passed parameters.
-** Data passed to the function will automatically be stringified.
-** Automatically increments the apiCounter variable.
+* Executes a request with payload against the passed MAPI endpoint after applying the ProjectID to the URL, then other passed parameters.
+* Data passed to the function will automatically be stringified.
+* Automatically increments the apiCounter variable.
 **/
 const executeRequest = (endpoint, method, data, args) => {
   const keys = loadKeys();
@@ -40,6 +60,5 @@ const executeRequest = (endpoint, method, data, args) => {
     options['payload'] = JSON.stringify(data);
   }
   
-  apiCounter++;
-  return UrlFetchApp.fetch(url, options);
+  return execute(url, options);
 }
