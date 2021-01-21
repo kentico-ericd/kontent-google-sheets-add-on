@@ -15,8 +15,8 @@ const doImport = (e) => {
 
   // Get ALL values from sheet
   const sheet = SpreadsheetApp.getActiveSheet();
-  const type = sheet.getName().toLowerCase();
   const values = sheet.getDataRange().getValues();
+  typeCodename = sheet.getName().toLowerCase();
 
   if (values[0].length < 1) {
     showAlert('Your sheet doesn\'t contain enough data to import!');
@@ -93,13 +93,12 @@ const doImport = (e) => {
     // Increase k by 1 because values[] is 0-based but Sheet row numbers start at 1
     upsertResult = { "row": k + 1, "name": "", updatedExisting: false, "errors": [], "results": [] };
 
-    upsertRowData(values[k], type);
+    upsertRowData(values[k]);
 
     // Add result json object to sheet result object
     resultJSON.rows.push(upsertResult);
   }
 
-  resultJSON.stats.type = type;
   resultJSON.stats.apiCounter = apiCounter; 
   resultJSON.stats.itemCounter = itemCounter;
   resultJSON.stats.variantCounter = variantCounter;
@@ -108,7 +107,7 @@ const doImport = (e) => {
   makeResultSheet(e);
 }
 
-const upsertRowData = (rowValues, type) => {
+const upsertRowData = (rowValues) => {
   const name = (nameColumn === -1) ? '' : rowValues[nameColumn].toString();
   const externalId = (externalIdColumn === -1) ? '' : rowValues[externalIdColumn].toString();
   let lang = (langColumn === -1) ? defaultLang : rowValues[langColumn];
@@ -124,13 +123,13 @@ const upsertRowData = (rowValues, type) => {
   upsertResult.name = name;
 
   if (!doUpdate) {
-    const itemResponse = createNewItem(type, name, externalId);
+    const itemResponse = createNewItem(name, externalId);
     if(itemResponse.code === 201) {
       // Item success
       const newItem = itemResponse.data;
       upsertResult.results.push(`Created new item with ID ${newItem.id}`);
 
-      updateExistingItem(newItem, externalId, type, rowValues, true, lang);
+      updateExistingItem(newItem, externalId, rowValues, true, lang);
     }
     else {
       // Item failure
@@ -140,15 +139,15 @@ const upsertRowData = (rowValues, type) => {
     }
   }
   else {
-    let existingItem = getExistingItem(type, name, externalId);
+    let existingItem = getExistingItem(name, externalId);
     if (existingItem === undefined) {
       // No content item - create item, then variant
-      const itemResponse = createNewItem(type, name, externalId);
+      const itemResponse = createNewItem(name, externalId);
       if(itemResponse.code === 201) {
         // Item success
         existingItem = itemResponse.data;
         upsertResult.results.push(`Created new item with ID ${existingItem.id}`);
-        updateExistingItem(existingItem, externalId, type, rowValues, true, lang);
+        updateExistingItem(existingItem, externalId, rowValues, true, lang);
       }
       else {
         // Item failure
@@ -165,12 +164,12 @@ const upsertRowData = (rowValues, type) => {
       const itemId = (existingItem.id === undefined) ? existingItem.system.id : existingItem.id;
 
       upsertResult.results.push(`Found existing item with ID ${itemId}`);
-      updateExistingItem(existingItem, externalId, type, rowValues, false, lang);
+      updateExistingItem(existingItem, externalId, rowValues, false, lang);
     }
   }
 }
 
-const updateExistingItem = (existingItem, externalId, typeCodeName, rowValues, isNew, lang) => {
+const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang) => {
   if (stopProcessing) {
     return;
   }
@@ -220,7 +219,7 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, rowValues, i
 
   // Get elements of type
   let typeElements;
-  const typeResponse = getType(typeCodeName);
+  const typeResponse = getType(typeCodename);
   if (typeResponse.code === 200) {
     typeElements = getTypeElements(typeResponse.data);
   }
@@ -228,7 +227,7 @@ const updateExistingItem = (existingItem, externalId, typeCodeName, rowValues, i
     // Content type failure
     stopProcessing = true;
     errorCounter++;
-    upsertResult.errors.push(`Error getting elements for type ${typeCodeName}: ${typeResponse.data}`);
+    upsertResult.errors.push(`Error getting elements for type ${typeCodename}: ${typeResponse.data}`);
     return;
   }
 
@@ -386,7 +385,7 @@ const makeResultSheet = (e) => {
   duration /= 1000;
 
   // Add stats (remember to fill empty cols with a value)
-  values.push(['Content type:', resultJSON.stats.type, '', '', '']);
+  values.push(['Content type:', typeCodename, '', '', '']);
   values.push(['Seconds elapsed:', duration, '', '', '']);
   values.push(['Seconds spent throttled:', waitTimes/1000, '', '', '']);
   values.push(['Total API Calls:', resultJSON.stats.apiCounter, '', '', '']);
@@ -413,18 +412,18 @@ const makeResultSheet = (e) => {
 }
 
 const makeSheet = (e) => {
-  const type = JSON.parse(e.commonEventObject.parameters.json);
+  const contentType = JSON.parse(e.commonEventObject.parameters.json);
 
   // Check if sheet with code name already exists
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(type.codename);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(contentType.codename);
   if (sheet != null) {
     showAlert('A sheet already exists with this content type code name.');
     return;
   }
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const newSheet = ss.insertSheet(type.codename);
-  const elements = getTypeElements(type);
+  const newSheet = ss.insertSheet(contentType.codename);
+  const elements = getTypeElements(contentType);
 
   // Generate headers
   const range = newSheet.getRange(1, 1, 1, elements.length + 3);

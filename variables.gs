@@ -13,6 +13,7 @@ const SNIPPET_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/sni
 const LANGUAGES_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/languages';
 
 // Import variables
+let typeCodename = "";
 let defaultLang = "default";
 let startTime;
 let headers = [];
@@ -44,6 +45,7 @@ const loadKeys = () => {
 }
 
 const resetGlobals = () => {
+  typeCodename = "";
   defaultLang = "default";
   startTime = new Date();
   headers = [];

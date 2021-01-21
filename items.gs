@@ -53,7 +53,7 @@ const getAllContentItems = () => {
   }
 }
 
-const createNewItem = (type, name, externalId) => {
+const createNewItem = (name, externalId) => {
   if(stopProcessing) {
     return; 
   }
@@ -63,7 +63,7 @@ const createNewItem = (type, name, externalId) => {
     data = {
       'name': name,
       'type': {
-        'codename': type
+        'codename': typeCodename
       }
     };
   }
@@ -71,7 +71,7 @@ const createNewItem = (type, name, externalId) => {
     data = {
       'name': name,
       'type': {
-        'codename': type
+        'codename': typeCodename
       },
       'external_id': externalId.toString()
     };
@@ -111,10 +111,10 @@ const findById = (externalId) => {
   }
 }
 
-const findByName = (name, type) => {
+const findByName = (name) => {
   const keys = loadKeys();
   // @ts-ignore
-  const url = `${PREVIEW_ENDPOINT.formatUnicorn({project_id: keys.pid})}/items?system.name=${name}&system.type=${type}&elements=fakeelementname&depth=0`;
+  const url = `${PREVIEW_ENDPOINT.formatUnicorn({project_id: keys.pid})}/items?system.name=${name}&system.type=${typeCodename}&elements=fakeelementname&depth=0`;
   const options = {
     'method': 'get',
     'contentType': 'application/json',
@@ -132,7 +132,7 @@ const findByName = (name, type) => {
   }
 }
 
-const getExistingItem = (type, name, externalId) => {
+const getExistingItem = (name, externalId) => {
   if(externalId !== '') {
     if(doPreload) {
       return contentItemCache.filter(i => i.external_id && i.external_id === externalId)[0];
@@ -148,7 +148,7 @@ const getExistingItem = (type, name, externalId) => {
     }
     else {
       // Make Deliver request
-      return findByName(name, type);
+      return findByName(name);
     }
   }
 }
