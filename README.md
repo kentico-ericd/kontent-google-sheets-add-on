@@ -86,7 +86,6 @@ Click the Kontent icon in the sidebar and open the __Import__ menu. You have two
 If enabled, an existing content item will attempt to be updated using the `external_id` of each row, or the `name` if there is no external ID column. If you disable it, a new item will always be created, but be aware that you may run into errors if you’ve provided an external ID that already exists in the system. As is the case with all errors, the script will simply skip that record and continue processing the rest of the Sheet.
 
 - __Preload content items__: If enabled, the script will load _all_ content items from your project at the start. When attempting to locate existing items, the script will use the cached data, greatly reducing the number of API calls and execution time.  
-Note: Currently, this only works when locating items by name. When utilizing the `external_id` column, a request will be made to the Management API.
 
 After clicking the __Run__ button, please wait while the script runs. When it’s finished, a new window Sheet is created containing a detailed record of the operations taken per-row and general information:
 
