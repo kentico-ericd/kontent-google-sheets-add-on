@@ -1,8 +1,19 @@
 const CARD_SETTINGS = 'Project settings',
-CARD_GENERATE = 'Generate sheet',
-CARD_IMPORT = 'Import';
+      CARD_GENERATE = 'Generate sheet',
+      CARD_IMPORT = 'Import',
+      CARD_INSERT = 'Rich text macros';
 const KEY_DOUPDATE = 'doupdate_key',
-KEY_DOPRELOAD = 'dopreload_key';
+      KEY_DOPRELOAD = 'dopreload_key',
+      KEY_INLINEITEM_IDENTIFIERTYPE = 'inlineitem_identifiertype_key',
+      KEY_INLINEITEM_IDENTIFIER = 'inlineitem_identifier_key',
+      KEY_ITEMLINK_IDENTIFIER = 'itemlink_identifier_key',
+      KEY_ITEMLINK_IDENTIFIERTYPE = 'itemlink_identifiertype_key',
+      KEY_ITEMLINK_TEXT = 'itemlink_text_key',
+      KEY_ASSETLINK_IDENTIFIER = 'assetlink_identifier_key',
+      KEY_ASSETLINK_IDENTIFIERTYPE = 'assetlink_identifiertype_key',
+      KEY_ASSETLINK_TEXT = 'assetlink_text_key';
+const VALUE_IDENTIFIERTYPE_ID = 'id',
+      VALUE_IDENTIFIERTYPE_EXTERNAL = 'external_id';
 
 const showHomeCard = () => {
   // Nav buttons
@@ -24,6 +35,12 @@ const showHomeCard = () => {
       .setOnClickAction(CardService.newAction()
         .setFunctionName('navigateTo')
         .setParameters({ 'card': CARD_IMPORT }));
+  const insertButton = CardService.newTextButton()
+      .setText(CARD_INSERT)
+      .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
+      .setOnClickAction(CardService.newAction()
+        .setFunctionName('navigateTo')
+        .setParameters({ 'card': CARD_INSERT }));
 
   // Get connected project
   const keys = loadKeys();
@@ -58,6 +75,7 @@ const showHomeCard = () => {
     .addSection(CardService.newCardSection()
       .addWidget(projectInfo)
       .addWidget(importButton)
+      .addWidget(insertButton)
       .addWidget(generateButton)
       .addWidget(settingsButton))
     .setFixedFooter(fixedFooter)
@@ -79,10 +97,99 @@ const navigateTo = (e) => {
     case CARD_SETTINGS:
       nav = CardService.newNavigation().pushCard(makeSettingsCard());
       break;
+    case CARD_INSERT:
+      nav = CardService.newNavigation().pushCard(makeInsertCard());
+      break;
   }
 
   return CardService.newActionResponseBuilder()
     .setNavigation(nav)
+    .build();
+}
+
+const makeInsertCard = () => {
+  // Insert item link
+  const itemLinkSection = CardService.newCardSection()
+    .setHeader('Insert content item link');
+  const itemLinkType = CardService.newSelectionInput()
+    .setType(CardService.SelectionInputType.RADIO_BUTTON)
+    .setTitle('Identifier type')
+    .setFieldName(KEY_ITEMLINK_IDENTIFIERTYPE)
+    .addItem('Item ID', VALUE_IDENTIFIERTYPE_ID, true)
+    .addItem('External ID', VALUE_IDENTIFIERTYPE_EXTERNAL, false);
+  const itemLinkIDInput = CardService.newTextInput()
+    .setFieldName(KEY_ITEMLINK_IDENTIFIER)
+    .setHint('Enter the content item ID or external ID');
+  const itemLinkTextInput = CardService.newTextInput()
+    .setFieldName(KEY_ITEMLINK_TEXT)
+    .setHint('Link text');
+  const itemLinkButton = CardService.newTextButton()
+    .setText('Insert')
+    .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('insertMacro')
+      .setParameters({ macro: KEY_ITEMLINK_IDENTIFIER }));
+  itemLinkSection.addWidget(itemLinkType);
+  itemLinkSection.addWidget(itemLinkIDInput);
+  itemLinkSection.addWidget(itemLinkTextInput);
+  itemLinkSection.addWidget(itemLinkButton);
+
+  // Insert inline item
+  const inlineItemSection = CardService.newCardSection()
+    .setHeader('Insert inline content item');
+  const inlineItemType = CardService.newSelectionInput()
+    .setType(CardService.SelectionInputType.RADIO_BUTTON)
+    .setTitle('Identifier type')
+    .setFieldName(KEY_INLINEITEM_IDENTIFIERTYPE)
+    .addItem('Item ID', VALUE_IDENTIFIERTYPE_ID, true)
+    .addItem('External ID', VALUE_IDENTIFIERTYPE_EXTERNAL, false);
+  const inlineItemInput = CardService.newTextInput()
+    .setFieldName(KEY_INLINEITEM_IDENTIFIER)
+    .setHint('Enter the content item ID or external ID');
+  const inlineItemButton = CardService.newTextButton()
+    .setText('Insert')
+    .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('insertMacro')
+      .setParameters({ macro: KEY_INLINEITEM_IDENTIFIER }));
+  inlineItemSection.addWidget(inlineItemType);
+  inlineItemSection.addWidget(inlineItemInput);
+  inlineItemSection.addWidget(inlineItemButton);
+
+  // Insert asset link
+  const assetLinkSection = CardService.newCardSection()
+    .setHeader('Insert asset link');
+  const assetLinkType = CardService.newSelectionInput()
+    .setType(CardService.SelectionInputType.RADIO_BUTTON)
+    .setTitle('Identifier type')
+    .setFieldName(KEY_ASSETLINK_IDENTIFIERTYPE)
+    .addItem('Asset ID', VALUE_IDENTIFIERTYPE_ID, true)
+    .addItem('External ID', VALUE_IDENTIFIERTYPE_EXTERNAL, false);
+  const assetLinkInput = CardService.newTextInput()
+    .setFieldName(KEY_ASSETLINK_IDENTIFIER)
+    .setHint('Enter the asset ID or external ID');
+  const assetLinkTextInput = CardService.newTextInput()
+    .setFieldName(KEY_ASSETLINK_TEXT)
+    .setHint('Link text');
+  const assetLinkButton = CardService.newTextButton()
+    .setText('Insert')
+    .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('insertMacro')
+      .setParameters({ macro: KEY_ASSETLINK_IDENTIFIER }));
+  assetLinkSection.addWidget(assetLinkType);
+  assetLinkSection.addWidget(assetLinkInput);
+  assetLinkSection.addWidget(assetLinkTextInput);
+  assetLinkSection.addWidget(assetLinkButton);
+
+  return CardService.newCardBuilder()
+    .setName(CARD_INSERT)
+    .addSection(CardService.newCardSection()
+      .addWidget(CardService.newTextParagraph()
+        .setText('To insert a macro, the cell must be selected but <b>not</b> in edit mode (the cursor should not be visible).')))
+    .addSection(itemLinkSection)
+    .addSection(inlineItemSection)
+    .addSection(assetLinkSection)
     .build();
 }
 
@@ -160,7 +267,6 @@ const makeImportCard = () => {
         .setText('Imports the currently active Sheet. Rows in the Sheet are imported as content items of the type specified by the Sheet name.')))
     .addSection(section)
     .setFixedFooter(fixedFooter)
-    .setDisplayStyle(CardService.DisplayStyle.PEEK)
     .build();
 }
 

@@ -7,6 +7,9 @@ const CONVERTERS = [
   ['link-asset', LINK_TO_ASSET],
   ['item', CONTENT_ITEM_LINK]
 ];
+const MACRO_TEMPLATE_ITEMLINK = "##link-item:{identifier_type}:{identifier}:{text}##",
+      MACRO_TEMPLATE_INLINEITEM = "##item:{identifier_type}:{identifier}##",
+      MACRO_TEMPLATE_ASSETLINK = "##link-asset:{identifier_type}:{identifier}:{text}##";
 
 const parseRichText = (text) => {
   // A single index in this array will look like ["##macro##","macro"]
@@ -50,5 +53,38 @@ const convertMacro = (fullMacro, innerText) => {
       // Couldn't find matching converter
       return null;
     }
+  }
+}
+
+const insertMacro = (e) => {
+  const macro = e.parameters.macro;
+  const formInput = e.commonEventObject.formInputs;
+  let identifier, identifierType, output;
+
+  switch(macro) {
+    case KEY_INLINEITEM_IDENTIFIER:
+      identifier = formInput[KEY_INLINEITEM_IDENTIFIER].stringInputs.value[0];
+      identifierType = formInput[KEY_INLINEITEM_IDENTIFIERTYPE].stringInputs.value[0];
+      output = MACRO_TEMPLATE_INLINEITEM.formatUnicorn({ identifier_type: identifierType, identifier: identifier });
+      break;
+    case KEY_ITEMLINK_IDENTIFIER:
+      identifier = formInput[KEY_ITEMLINK_IDENTIFIER].stringInputs.value[0];
+      identifierType = formInput[KEY_ITEMLINK_IDENTIFIERTYPE].stringInputs.value[0];
+      const linkText = formInput[KEY_ITEMLINK_TEXT].stringInputs.value[0];
+      output = MACRO_TEMPLATE_ITEMLINK.formatUnicorn({ identifier_type: identifierType, identifier: identifier, text: linkText });
+      break;
+    case KEY_ASSETLINK_IDENTIFIER:
+      identifier = formInput[KEY_ASSETLINK_IDENTIFIER].stringInputs.value[0];
+      identifierType = formInput[KEY_ASSETLINK_IDENTIFIERTYPE].stringInputs.value[0];
+      const assetText = formInput[KEY_ASSETLINK_TEXT].stringInputs.value[0];
+      output = MACRO_TEMPLATE_ASSETLINK.formatUnicorn({ identifier_type: identifierType, identifier: identifier, text: assetText });
+      break;
+  }
+
+  if(output) {
+    // Insert macro in active cell
+    const cell = SpreadsheetApp.getActiveSheet().getActiveCell();
+    const cellValue = cell.getValue();
+    cell.setValue(cellValue + output);
   }
 }
