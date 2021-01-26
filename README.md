@@ -58,6 +58,7 @@ The following is an example of what a Sheet named __product__ might look like:
 ## Formatting Cell Values
 To avoid errors in importing data, the data in each column must be formatted according to the element it will be stored in. Most elements (such as Text and Number) are straight-forward, but some require specific formatting:
 
+- __Rich Text__: See [Setting Rich Text values](#setting-rich-text-values)
 - __Number__: If the value is not a valid `float` like "12.50" the script will try to parse the number based on the __currency_format__ value (see [Setting the headers](#setting-the-headers)). As US and EU formats are currently supported, some examples of valid numbers are: `1,500.75`, `1.500,75`, and `1 500,75`. The cell should not contain letters or currency symbols.  
 If you are using EU formatting, we recommend changing any Number columns in the Sheet to use __Plain text__ formatting:
 
@@ -66,16 +67,26 @@ If you are using EU formatting, we recommend changing any Number columns in the 
 - __Date & Time__: The script will first try to parse the value using the JavaScript [Date(string) constructor](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date), so any valid DateTime string will succeed. A typical valid string would be in the format `mm/dd/yyyy hh:mm am/pm`. The script will also accept strings that use dashes instead of slashes (`12-25-2019 6:00 AM`) or timestamps from SQL (`2019-12-25 06:00:00.0000000`).
 - __URL Slug__: There is no special formatting needed for URL Slug elements. If a value is provided, the element's `mode` will be changed to "custom" and no longer auto-generate based on another content type element. To revert the URL Slug element back to auto-generation, set the value to `#autogenerate#`.
 - __Taxonomy and Multiple Choice__: Values should be the code name of the items, separated by a comma (for example `on_sale, bestseller`)
-- __Rich Text__: This element will most likely require the most pre-processing; try to avoid complex HTML and text formatting. The list of supported HTML elements and their syntax can be found in our [documentation](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/html5-elements-allowed-in-rich-text).
-Notably, you can insert links to other content items or assets by referencing and ID or external ID using the format described in [this section](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/links-in-rich-text). For example: `Buy our <a data-item-external-id="F4891FB5-5215-4795-8A6F-18A4F68394FD">new coffee</a>`. You can also add inline content items using the syntax [here](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/content-items-in-rich-text), for example `<object type="application/kenticocloud" data-type="item" data-external-id="59713"></object>`.  
+- __Assets__: Values for Asset elements should be a comma-separated list, as the element can accept multiple Assets. The format for a single asset is `<identifier type>:<identifier>` where the type is either "id" or "external_id" and the identifier is the corresponding value. An example of updating multiple Assets at once is `id:0013263e-f2a9-40b1-9a3e-7ab6510bafe5,id:08bf515c-3b0e-4760-907b-6db0a22d41f3`.
+- __Linked Items__: The value of this cell is the same as Assets. It should be a comma-separated list of items in the format `<identifier type>:<identifier>`. You can use _id_, _external_id_, or _codename_ to reference content items, for example: `codename:birthday_party,id:eba1015a-dfd4-5736-abc1-5de3ed5df732`.
+
+### Setting Rich Text values
+
+ This element will most likely require the most pre-processing; try to avoid complex HTML and text formatting. The list of supported HTML elements and their syntax can be found in our [documentation](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/html5-elements-allowed-in-rich-text).
+Notably, you can insert links to other content items or assets by referencing and ID or external ID using the format described in [this section](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/links-in-rich-text).
+
+For example: `Buy our <a data-item-external-id="F4891FB5-5215-4795-8A6F-18A4F68394FD">new coffee</a>`. You can also add inline content items using the syntax [here](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/content-items-in-rich-text), for example `<object type="application/kenticocloud" data-type="item" data-external-id="59713"></object>`.
+
 Or, you can use special macros designed for this add-on. In the list below, the `identifier_type` can be "id" or "external-id":  
   | macro | description | format | example |
   | ----- | ----------- | ------ | ------- |
   | link-item | Inserts a link to a content item | `macro:identifier_type:identifier:text` | `##link-item:id:5946ca5d-cebe-4be1-b5f0-4cd0a0e43fb5:coffee is good##` |
   | link-asset | Inserts a link to an asset | `macro:identifier_type:identifier:text` | `##link-asset:id:0013263e-f2a9-40b1-9a3e-7ab6510bafe5:asset##` |
   | item | Inserts an inline content item | `macro:identifier_type:identifier` | `##item:external-id:article6##` |
-- __Assets__: Values for Asset elements should be a comma-separated list, as the element can accept multiple Assets. The format for a single asset is `<identifier type>:<identifier>` where the type is either "id" or "external_id" and the identifier is the corresponding value. An example of updating multiple Assets at once is `id:0013263e-f2a9-40b1-9a3e-7ab6510bafe5,id:08bf515c-3b0e-4760-907b-6db0a22d41f3`.
-- __Linked Items__: The value of this cell is the same as Assets. It should be a comma-separated list of items in the format `<identifier type>:<identifier>`. You can use _id_, _external_id_, or _codename_ to reference content items, for example: `codename:birthday_party,id:eba1015a-dfd4-5736-abc1-5de3ed5df732`.
+
+You can insert content item links, asset links, and inline content items by entering the HTML or macro manually. Or, you can use the **Rich text macros** menu found in the add-on to insert macros:
+
+![Macro menu](/img/macromenu.png)
 
 ## Importing the Content
 Click the Kontent icon in the sidebar and open the __Import__ menu. You have two options before starting the import:
@@ -90,6 +101,8 @@ If enabled, an existing content item will attempt to be updated using the `exter
 After clicking the __Run__ button, please wait while the script runs. When it’s finished, a new window Sheet is created containing a detailed record of the operations taken per-row and general information:
 
 ![Import log](/img/log.png)
+
+### Batching
 
 The import process will run for a maximum of 30 seconds. If your Sheet contains a large amount of data that cannot be completed within 30 seconds, the import will be performed in batches. You will be shown a menu stating which rows were successfully processed, and you can click **Resume** to continue importing the Sheet.
 
