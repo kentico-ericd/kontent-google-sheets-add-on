@@ -13,9 +13,11 @@ const SNIPPET_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/sni
 const LANGUAGES_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/languages';
 
 // Import variables
+let typeElements = [];
+let typeID = '';
 let values = [];
 let importingRowNum = 1;
-let typeCodename = "";
+let typeCodename = '';
 let defaultLang = "default";
 let startTime;
 let headers = [];
@@ -49,10 +51,12 @@ CACHE_APICOUNTER_KEY = 'CACHE_APICOUNTER',
 CACHE_ITEMCOUNTER_KEY = 'CACHE_ITEMCOUNTER',
 CACHE_VARIANTCOUNTER_KEY = 'CACHE_VARIANTCOUNTER',
 CACHE_ERRORCOUNTER_KEY = 'CACHE_ERRORCOUNTER',
-CACHE_WAITTIMES_KEY = 'CACHE_WAITTIMES';
+CACHE_WAITTIMES_KEY = 'CACHE_WAITTIMES',
+CACHE_TYPEID_KEY = 'CACHE_TYPEID',
+CACHE_TYPEELEMENTS_KEY = 'CACHE_TYPEELEMENTS';
+const keyList = [CACHE_VALUES_KEY, CACHE_ROW_KEY, CACHE_CONTENTITEMS_KEY, CACHE_RESULTS_KEY, CACHE_CODENAME_KEY, CACHE_DOUPDATE_KEY, CACHE_DOPRELOAD_KEY, CACHE_DEFAULTLANG_KEY, CACHE_PUBLISHSTEP_KEY, CACHE_DRAFTSTEP_KEY, CACHE_APICOUNTER_KEY, CACHE_ITEMCOUNTER_KEY, CACHE_VARIANTCOUNTER_KEY, CACHE_ERRORCOUNTER_KEY, CACHE_WAITTIMES_KEY, CACHE_TYPEID_KEY, CACHE_TYPEELEMENTS_KEY];
 
 const cacheData = () => {
-  const cache = CacheService.getUserCache();
   const data = {};
 
   data[CACHE_ROW_KEY] = importingRowNum.toString();
@@ -70,14 +74,14 @@ const cacheData = () => {
   data[CACHE_WAITTIMES_KEY] = waitTimes.toString();
   data[CACHE_VALUES_KEY] = JSON.stringify(values);
   data[CACHE_CONTENTITEMS_KEY] = JSON.stringify(contentItemCache);
+  data[CACHE_TYPEID_KEY] = typeID;
+  data[CACHE_TYPEELEMENTS_KEY] = JSON.stringify(typeElements);
 
-  cache.putAll(data);
+  CacheService.getUserCache().putAll(data);
 }
 
 const loadCache = () => {
-  const cache = CacheService.getUserCache().getAll([CACHE_VALUES_KEY, CACHE_ROW_KEY, CACHE_CONTENTITEMS_KEY, CACHE_RESULTS_KEY, CACHE_CODENAME_KEY, CACHE_DOUPDATE_KEY, CACHE_DOPRELOAD_KEY, CACHE_DEFAULTLANG_KEY, CACHE_PUBLISHSTEP_KEY, CACHE_DRAFTSTEP_KEY, CACHE_APICOUNTER_KEY, CACHE_ITEMCOUNTER_KEY, CACHE_VARIANTCOUNTER_KEY, CACHE_ERRORCOUNTER_KEY, CACHE_WAITTIMES_KEY]);
-  Logger.log(`cache loaded`);
-  Logger.log(cache);
+  const cache = CacheService.getUserCache().getAll(keyList);Logger.log(cache);
   
   values = JSON.parse(cache[CACHE_VALUES_KEY]);
   importingRowNum = parseInt(cache[CACHE_ROW_KEY]);
@@ -94,6 +98,12 @@ const loadCache = () => {
   variantCounter = parseInt(cache[CACHE_VARIANTCOUNTER_KEY]);
   errorCounter = parseInt(cache[CACHE_ERRORCOUNTER_KEY]);
   waitTimes = parseInt(cache[CACHE_WAITTIMES_KEY]);
+  typeID = cache[CACHE_TYPEID_KEY];
+  typeElements = JSON.parse(cache[CACHE_TYPEELEMENTS_KEY]);
+}
+
+const clearCache = () => {
+  CacheService.getUserCache().removeAll(keyList);
 }
 
 const loadKeys = () => {

@@ -84,13 +84,25 @@ const initVars = () => {
       doPreload = false;
     }
   }
+
+  // Get elements of type
+  const typeResponse = getType(typeCodename);
+  if (typeResponse.code === 200) {
+    typeID = typeResponse.data.id;
+    typeElements = getTypeElements(typeResponse.data);
+  }
+  else {
+    // Content type failure
+    showAlert(`Error getting elements for type ${typeCodename}: ${typeResponse.data}`);
+    return;
+  }
 }
 
 /**
  * Called from Import menu, set up sheet variables and init timer for import
  */
 const doImport = (e) => {
-  resetGlobals();
+  clearCache();
 
   // Get form values from Import menu
   if(e.commonEventObject.formInputs) {
@@ -99,26 +111,12 @@ const doImport = (e) => {
   }
 
   initVars();
-  cacheData();
 
-  // Run import after timed trigger
-  ScriptApp.newTrigger("upsertOnTimer")
-      .timeBased()
-      .after(5000)
-      .create();
-
-  return showImportInProgress();
-  //resultJSON.stats.apiCounter = apiCounter; 
-  //resultJSON.stats.itemCounter = itemCounter;
-  //resultJSON.stats.variantCounter = variantCounter;
-  //resultJSON.stats.errorCounter = errorCounter;
-
-  //makeResultSheet(e);
+  return upsertChunk(e);
 }
 
-const upsertOnTimer = () => {
+const upsertChunk = (e) => {
   startTime = new Date();
-  Logger.log(`upsertOnTime called`);
 
   // Load data from cache if function was called from timer
   if(values.length === 0) {
@@ -127,7 +125,6 @@ const upsertOnTimer = () => {
   }
 
   while (importingRowNum < values.length) {
-    Logger.log(`looping importingRowNum=${importingRowNum}/${values.length}`);
 
     stopProcessing = false;
     // Init json result object for this row
@@ -140,19 +137,22 @@ const upsertOnTimer = () => {
     resultJSON.rows.push(upsertResult);
     importingRowNum++;
 
-    // Check if it's been 30 seconds, if so trigger this function another time
-    if (isTimeUp()) {
+    // Check if it's been 30 seconds, if so cache data and prompt user to re-run
+    if (isTimeUp() && importingRowNum < values.length) {
       cacheData();
 
-      // Run again after 5 seconds
-      ScriptApp.newTrigger("upsertOnTimer")
-          .timeBased()
-          .after(5000)
-          .create();
-      
-      break;
+      // Prompt user to re-run import for next chunk
+      return showImportProgress(importingRowNum, values.length-1);
     }
   }
+
+  // Import finished final row- show results
+  resultJSON.stats.apiCounter = apiCounter; 
+  resultJSON.stats.itemCounter = itemCounter;
+  resultJSON.stats.variantCounter = variantCounter;
+  resultJSON.stats.errorCounter = errorCounter;
+
+  return makeResultSheet(e);
 }
 
 const upsertRowData = (rowValues) => {
@@ -263,20 +263,6 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang) =>
       }
 
     }
-  }
-
-  // Get elements of type
-  let typeElements;
-  const typeResponse = getType(typeCodename);
-  if (typeResponse.code === 200) {
-    typeElements = getTypeElements(typeResponse.data);
-  }
-  else {
-    // Content type failure
-    stopProcessing = true;
-    errorCounter++;
-    upsertResult.errors.push(`Error getting elements for type ${typeCodename}: ${typeResponse.data}`);
-    return;
   }
 
   // Create JS object with only row data for headers that match type elements
@@ -426,15 +412,8 @@ const makeResultSheet = (e) => {
   const newSheet = ss.insertSheet(`Import log: ${new Date().toUTCString()}`);
   const values = [];
 
-  // Get import duration
-  const endTime = new Date();
-  // @ts-ignore
-  let duration = endTime - startTime;
-  duration /= 1000;
-
   // Add stats (remember to fill empty cols with a value)
   values.push(['Content type:', typeCodename, '', '', '']);
-  values.push(['Seconds elapsed:', duration, '', '', '']);
   values.push(['Seconds spent throttled:', waitTimes/1000, '', '', '']);
   values.push(['Total API Calls:', resultJSON.stats.apiCounter, '', '', '']);
   values.push(['New content items:', resultJSON.stats.itemCounter, '', '', '']);
@@ -457,6 +436,8 @@ const makeResultSheet = (e) => {
   const range = newSheet.getRange(1,1, values.length, 5); // Increase last param if more columns are added
   range.setValues(values);
   newSheet.activate();
+
+  return navigateTo();
 }
 
 const makeSheet = (e) => {

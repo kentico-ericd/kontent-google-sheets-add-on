@@ -84,10 +84,17 @@ const showHomeCard = () => {
   return [homeCard];
 }
 
-const showImportInProgress = () => {
+const showImportProgress = (rowNum, totalRows) => {
   const card = CardService.newCardBuilder()
     .addSection(CardService.newCardSection()
-      .addWidget(CardService.newTextParagraph().setText('Your import is in progress.')))
+      .addWidget(CardService.newTextParagraph().setText('Import partially completed:'))
+      .addWidget(CardService.newTextParagraph().setText(`<b>${rowNum}/${totalRows}</b>`))
+      .addWidget(CardService.newTextParagraph().setText('Please click the button below to resume importing the Sheet.')))
+    .setFixedFooter(CardService.newFixedFooter()
+      .setPrimaryButton(CardService.newTextButton()
+        .setText('Resume')
+        .setOnClickAction(CardService.newAction()
+          .setFunctionName('upsertChunk'))))
     .build();
   const nav = CardService.newNavigation().pushCard(card);
 
@@ -96,9 +103,9 @@ const showImportInProgress = () => {
     .build();
 }
 
-const navigateTo = (e) => {
+const navigateTo = (e = undefined) => {
   let nav;
-  const cardName = e.parameters.card;
+  const cardName = e ?  e.parameters.card : '';
   switch(cardName) {
     case CARD_GENERATE:
       nav = CardService.newNavigation().pushCard(makeGenerateCard());
@@ -112,6 +119,8 @@ const navigateTo = (e) => {
     case CARD_INSERT:
       nav = CardService.newNavigation().pushCard(makeInsertCard());
       break;
+    default:
+      nav = CardService.newNavigation().popToRoot();
   }
 
   return CardService.newActionResponseBuilder()

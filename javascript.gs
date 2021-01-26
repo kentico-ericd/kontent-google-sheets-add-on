@@ -1,5 +1,4 @@
 const isTimeUp = () => {
-  Logger.log(`isTimeUp duration=${new Date().getTime() - startTime.getTime()}`);
 
   var now = new Date();
   return now.getTime() - startTime.getTime() > 30000;
