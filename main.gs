@@ -4,26 +4,7 @@
 -----------------------------------------------
 **/
 
-const doImport = (e) => {
-  resetGlobals();
-
-  // Get form values from Import menu
-  if(e.commonEventObject.formInputs) {
-    doUpdate = e.commonEventObject.formInputs[KEY_DOUPDATE] ? true : false;
-    doPreload = e.commonEventObject.formInputs[KEY_DOPRELOAD] ? true : false;
-  }
-
-  // Get ALL values from sheet
-  const sheet = SpreadsheetApp.getActiveSheet();
-  const values = sheet.getDataRange().getValues();
-  typeCodename = sheet.getName().toLowerCase();
-
-  if (values[0].length < 1) {
-    showAlert('Your sheet doesn\'t contain enough data to import!');
-    return;
-  }
-
-  // Get all header values
+const getHeaders = () => {
   for (var i = 0; i < values[0].length; i++) {
     const value = values[0][i].toString().toLowerCase();
     switch (value) {
@@ -48,6 +29,23 @@ const doImport = (e) => {
     showAlert('Your sheet needs to contain a "name" header');
     return;
   }
+}
+
+/**
+ * Load sheet data and project info. Should only be called from UI, not from timer
+ */
+const initVars = () => {
+  // Get ALL values from sheet
+  const sheet = SpreadsheetApp.getActiveSheet();
+  values = sheet.getDataRange().getValues();
+  typeCodename = sheet.getName().toLowerCase();
+
+  if (values[0].length < 1) {
+    showAlert('Your sheet doesn\'t contain enough data to import!');
+    return;
+  }
+
+  getHeaders();
 
   // Get default lang of project- if fails, we use "default"
   const langResponse = getDefaultLanguage();
@@ -86,25 +84,75 @@ const doImport = (e) => {
       doPreload = false;
     }
   }
+}
 
-  for (var k = 1; k < values.length; k++) {
+/**
+ * Called from Import menu, set up sheet variables and init timer for import
+ */
+const doImport = (e) => {
+  resetGlobals();
+
+  // Get form values from Import menu
+  if(e.commonEventObject.formInputs) {
+    doUpdate = e.commonEventObject.formInputs[KEY_DOUPDATE] ? true : false;
+    doPreload = e.commonEventObject.formInputs[KEY_DOPRELOAD] ? true : false;
+  }
+
+  initVars();
+  cacheData();
+
+  // Run import after timed trigger
+  ScriptApp.newTrigger("upsertOnTimer")
+      .timeBased()
+      .after(5000)
+      .create();
+
+  return showImportInProgress();
+  //resultJSON.stats.apiCounter = apiCounter; 
+  //resultJSON.stats.itemCounter = itemCounter;
+  //resultJSON.stats.variantCounter = variantCounter;
+  //resultJSON.stats.errorCounter = errorCounter;
+
+  //makeResultSheet(e);
+}
+
+const upsertOnTimer = () => {
+  startTime = new Date();
+  Logger.log(`upsertOnTime called`);
+
+  // Load data from cache if function was called from timer
+  if(values.length === 0) {
+    loadCache();
+    getHeaders();
+  }
+
+  while (importingRowNum < values.length) {
+    Logger.log(`looping importingRowNum=${importingRowNum}/${values.length}`);
+
     stopProcessing = false;
     // Init json result object for this row
-    // Increase k by 1 because values[] is 0-based but Sheet row numbers start at 1
-    upsertResult = { "row": k + 1, "name": "", updatedExisting: false, "errors": [], "results": [] };
+    // Increase importingRowNum by 1 because values[] is 0-based but Sheet row numbers start at 1
+    upsertResult = { "row": importingRowNum + 1, "name": "", updatedExisting: false, "errors": [], "results": [] };
 
-    upsertRowData(values[k]);
+    upsertRowData(values[importingRowNum]);
 
     // Add result json object to sheet result object
     resultJSON.rows.push(upsertResult);
+    importingRowNum++;
+
+    // Check if it's been 30 seconds, if so trigger this function another time
+    if (isTimeUp()) {
+      cacheData();
+
+      // Run again after 5 seconds
+      ScriptApp.newTrigger("upsertOnTimer")
+          .timeBased()
+          .after(5000)
+          .create();
+      
+      break;
+    }
   }
-
-  resultJSON.stats.apiCounter = apiCounter; 
-  resultJSON.stats.itemCounter = itemCounter;
-  resultJSON.stats.variantCounter = variantCounter;
-  resultJSON.stats.errorCounter = errorCounter;
-
-  makeResultSheet(e);
 }
 
 const upsertRowData = (rowValues) => {

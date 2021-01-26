@@ -1,3 +1,10 @@
+const isTimeUp = () => {
+  Logger.log(`isTimeUp duration=${new Date().getTime() - startTime.getTime()}`);
+
+  var now = new Date();
+  return now.getTime() - startTime.getTime() > 30000;
+}
+
 // Format can be 'US' or 'EU'
 const tryParseNumber = (number, format) => {
 

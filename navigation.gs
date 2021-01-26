@@ -84,6 +84,18 @@ const showHomeCard = () => {
   return [homeCard];
 }
 
+const showImportInProgress = () => {
+  const card = CardService.newCardBuilder()
+    .addSection(CardService.newCardSection()
+      .addWidget(CardService.newTextParagraph().setText('Your import is in progress.')))
+    .build();
+  const nav = CardService.newNavigation().pushCard(card);
+
+  return CardService.newActionResponseBuilder()
+    .setNavigation(nav)
+    .build();
+}
+
 const navigateTo = (e) => {
   let nav;
   const cardName = e.parameters.card;
