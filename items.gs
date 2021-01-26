@@ -135,7 +135,7 @@ const findByName = (name) => {
 const getExistingItem = (name, externalId) => {
   if(externalId !== '') {
     if(doPreload) {
-      return contentItemCache.filter(i => i.external_id && i.external_id === externalId)[0];
+      return contentItemCache.filter(i => i.external_id && i.external_id === externalId && i.type.id === typeID)[0];
     }
     else {
       // Make MAPI request
@@ -144,7 +144,7 @@ const getExistingItem = (name, externalId) => {
   }
   else {
     if(doPreload) {
-      return contentItemCache.filter(i => i.name === name)[0];
+      return contentItemCache.filter(i => i.name === name && i.type.id === typeID)[0];
     }
     else {
       // Make Deliver request
