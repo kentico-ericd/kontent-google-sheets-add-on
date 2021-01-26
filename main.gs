@@ -8,17 +8,20 @@ const getHeaders = () => {
   for (var i = 0; i < values[0].length; i++) {
     const value = values[0][i].toString().toLowerCase();
     switch (value) {
-      case "language":
+      case 'language':
         langColumn = i
         break;
-      case "name":
+      case 'name':
         nameColumn = i
         break;
-      case "external_id":
+      case 'external_id':
         externalIdColumn = i
         break;
-      case "currency_format":
+      case 'currency_format':
         currencyFormatColumn = i;
+        break;
+      case 'codename':
+        codenameColumn = i;
         break;
     }
     headers.push(value);
@@ -58,10 +61,10 @@ const initVars = () => {
     const stepResponse = getWorkflowSteps();
     if (stepResponse.code === 200) {
       stepResponse.data.forEach(step => {
-        if (step.name === "Published") {
+        if (step.name === 'Published') {
           publishedWorkflowStepId = step.id;
         }
-        else if (step.name === "Draft") {
+        else if (step.name === 'Draft') {
           draftWorkflowStepId = step.id;
         }
       });
@@ -99,7 +102,7 @@ const initVars = () => {
 }
 
 /**
- * Called from Import menu, set up sheet variables and init timer for import
+ * Called from Import menu, get import options and begin importing first chunk
  */
 const doImport = (e) => {
   clearCache();
@@ -158,6 +161,7 @@ const upsertChunk = (e) => {
 const upsertRowData = (rowValues) => {
   const name = (nameColumn === -1) ? '' : rowValues[nameColumn].toString();
   const externalId = (externalIdColumn === -1) ? '' : rowValues[externalIdColumn].toString();
+  const codename = (codenameColumn === -1) ? '' : rowValues[codenameColumn].toString();
   let lang = (langColumn === -1) ? defaultLang : rowValues[langColumn];
   if (lang === '' || lang === undefined) lang = defaultLang;
 
@@ -171,13 +175,13 @@ const upsertRowData = (rowValues) => {
   upsertResult.name = name;
 
   if (!doUpdate) {
-    const itemResponse = createNewItem(name, externalId);
+    const itemResponse = createNewItem(name, externalId, codename);
     if(itemResponse.code === 201) {
       // Item success
       const newItem = itemResponse.data;
       upsertResult.results.push(`Created new item with ID ${newItem.id}`);
 
-      updateExistingItem(newItem, externalId, rowValues, true, lang);
+      updateExistingItem(newItem, externalId, rowValues, true, lang, codename, name);
     }
     else {
       // Item failure
@@ -187,15 +191,16 @@ const upsertRowData = (rowValues) => {
     }
   }
   else {
-    let existingItem = getExistingItem(name, externalId);
+    const itemResponse = getExistingItem(name, externalId);
+    let existingItem = itemResponse.item;
     if (existingItem === undefined) {
       // No content item - create item, then variant
-      const itemResponse = createNewItem(name, externalId);
+      const itemResponse = createNewItem(name, externalId, codename);
       if(itemResponse.code === 201) {
         // Item success
         existingItem = itemResponse.data;
         upsertResult.results.push(`Created new item with ID ${existingItem.id}`);
-        updateExistingItem(existingItem, externalId, rowValues, true, lang);
+        updateExistingItem(existingItem, externalId, rowValues, true, lang, codename, name);
       }
       else {
         // Item failure
@@ -212,12 +217,12 @@ const upsertRowData = (rowValues) => {
       const itemId = (existingItem.id === undefined) ? existingItem.system.id : existingItem.id;
 
       upsertResult.results.push(`Found existing item with ID ${itemId}`);
-      updateExistingItem(existingItem, externalId, rowValues, false, lang);
+      updateExistingItem(existingItem, externalId, rowValues, false, lang, codename, name, itemResponse.foundBy);
     }
   }
 }
 
-const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang) => {
+const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, codename, name, foundBy = '') => {
   if (stopProcessing) {
     return;
   }
@@ -370,6 +375,33 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang) =>
 
   if (stopProcessing) return;
 
+  // Check if we should update name or codename. If item is new, those values are already up-to-date
+  if(!isNew) {
+
+    const existingCodename = (existingItem.codename) ? existingItem.codename : existingItem.system.codename;
+    const existingName = (existingItem.name) ? existingItem.name : existingItem.system.name;
+    if(foundBy === 'name') {
+
+      // We can update the codename
+      if(codename !== existingCodename) {
+        upsertItem(itemId, codename, '', existingName);
+      }
+    }
+    else if(foundBy === 'external_id') {
+
+      // We can update both codename and name, check if either of them are different from existing item found
+      let nameToUpdate = name;
+      if(nameToUpdate === existingName) nameToUpdate = '';
+
+      let codenameToUpdate = codename;
+      if(codenameToUpdate === existingCodename) codenameToUpdate = '';
+
+      if(nameToUpdate !== '' || codenameToUpdate !== '') {
+        upsertItem(itemId, codenameToUpdate, nameToUpdate, existingName);
+      }
+    }
+  }
+
   const variantResponse = updateVariant(elements, itemId, lang);
   if(variantResponse.code === 200 || variantResponse.code === 201) {
     // Variant success
@@ -455,12 +487,13 @@ const makeSheet = (e) => {
   const elements = getTypeElements(contentType);
 
   // Generate headers
-  const range = newSheet.getRange(1, 1, 1, elements.length + 3);
-  range.getCell(1, 1).setValue("name");
-  range.getCell(1, 2).setValue("external_id");
-  range.getCell(1, 3).setValue("currency_format").setNote('Set this to "US" (or leave empty) for numbers formatted like "1,000.50" or "EU" for "1 000,50" formatting.');
+  const range = newSheet.getRange(1, 1, 1, elements.length + 4);
+  range.getCell(1, 1).setValue('name');
+  range.getCell(1, 2).setValue('external_id');
+  range.getCell(1, 3).setValue('codename');
+  range.getCell(1, 4).setValue('currency_format').setNote('Set this to "US" (or leave empty) for numbers formatted like "1,000.50" or "EU" for "1 000,50" formatting.');
 
   for (var i = 0; i < elements.length; i++) {
-    range.getCell(1, i + 4).setValue(elements[i].codename);
+    range.getCell(1, i + 5).setValue(elements[i].codename);
   }
 }

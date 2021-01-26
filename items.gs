@@ -21,7 +21,6 @@ const getAllContentItems = () => {
         }
       }
 
-      apiCounter++;
       response = execute(url, options);
       if(response.getResponseCode() === 200) {
 
@@ -53,29 +52,20 @@ const getAllContentItems = () => {
   }
 }
 
-const createNewItem = (name, externalId) => {
+const createNewItem = (name, externalId, codename) => {
   if(stopProcessing) {
     return; 
   }
   
-  let data;
-  if(externalId === '') {
-    data = {
+  const data = {
       'name': name,
       'type': {
         'codename': typeCodename
       }
     };
-  }
-  else {
-    data = {
-      'name': name,
-      'type': {
-        'codename': typeCodename
-      },
-      'external_id': externalId.toString()
-    };
-  }
+
+  if(externalId !== '') data.external_id = externalId;
+  if(codename !== '') data.codename = codename;
 
   const itemResponse = executeRequest(ITEMS_ENDPOINT, 'post', data);
   if(itemResponse.getResponseCode() === 201) {
@@ -132,23 +122,83 @@ const findByName = (name) => {
   }
 }
 
+/**
+ * Updates the name or codename of a content item
+ */
+const upsertItem = (itemId, codename, nameToUpdate, existingName) => {
+  const data = {};
+  let updatedParts = [];
+
+  if(codename !== '') {
+    data.codename = codename;
+    updatedParts.push('codename');
+  }
+  if(nameToUpdate !== '') {
+    data.name = nameToUpdate;
+    updatedParts.push('name');
+  }
+  else {
+    data.name = existingName;
+  }
+
+  Logger.log(`upsertItem data=${JSON.stringify(data)}`);
+
+  const itemResponse = executeRequest(ITEM_ID_ENDPOINT, 'put', data, {id: itemId});
+  if(itemResponse.getResponseCode() === 200) {
+    upsertResult.results.push(`Updated the ${updatedParts.join('/')} of item ${itemId}`);
+    return {
+      code: 200,
+      data: ''
+    };
+  }
+  else {
+    errorCounter++;
+    let response = JSON.parse(itemResponse.getContentText());
+    upsertResult.errors.push(`Failed to update the ${updatedParts.join('/')} of item ${itemId}: ${response.validation_errors[0].message}`);
+    return {
+      code: itemResponse.getResponseCode(),
+      data: response.validation_errors[0].message
+    }
+  }
+}
+
+/**
+ * Gets a content item by its name or external ID from cache or Kontent if cache not available. Returns an object where 'item' contains the located item, and 'foundBy' indicates which property the item was located with.
+ */
 const getExistingItem = (name, externalId) => {
+  let item;
   if(externalId !== '') {
     if(doPreload) {
-      return contentItemCache.filter(i => i.external_id && i.external_id === externalId && i.type.id === typeID)[0];
+      item = contentItemCache.filter(i => i.external_id && i.external_id === externalId && i.type.id === typeID)[0];
+      return {
+        item: item,
+        foundBy: 'external_id'
+      };
     }
     else {
       // Make MAPI request
-      return findById(externalId);
+      item = findById(externalId);
+      return {
+        item: item,
+        foundBy: 'external_id'
+      };
     }
   }
   else {
     if(doPreload) {
-      return contentItemCache.filter(i => i.name === name && i.type.id === typeID)[0];
+      item = contentItemCache.filter(i => i.name === name && i.type.id === typeID)[0];
+      return {
+        item: item,
+        foundBy: 'name'
+      };
     }
     else {
       // Make Deliver request
-      return findByName(name);
+      item = findByName(name);
+      return {
+        item: item,
+        foundBy: 'name'
+      };
     }
   }
 }

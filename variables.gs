@@ -2,6 +2,7 @@
 const PROJECT_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}';
 const ITEMS_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items';
 const ITEM_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/external-id/{external_id}';
+const ITEM_ID_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/{id}';
 const PREVIEW_ENDPOINT = 'https://preview-deliver.kontent.ai/{project_id}';
 const VARIANT_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/items/{item_identifier}/variants/codename/{language_codename}';
 const WORKFLOW_ENDPOINT = 'https://manage.kontent.ai/v2/projects/{project_id}/workflow';
@@ -24,7 +25,7 @@ let headers = [];
 let apiCounter = 0, itemCounter = 0, variantCounter = 0, errorCounter = 0, waitTimes = 0;
 let stopProcessing = false;
 let publishedWorkflowStepId, draftWorkflowStepId;
-let langColumn = -1, nameColumn = -1, externalIdColumn = -1, currencyFormatColumn = -1;
+let langColumn = -1, nameColumn = -1, externalIdColumn = -1, currencyFormatColumn = -1, codenameColumn = -1;
 let doUpdate = false, doPreload = false;
 
 // JSON objects for import results: main object for storing all results, single object used in each row
