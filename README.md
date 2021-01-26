@@ -36,12 +36,15 @@ The headers (first row) of your Sheet must contain the code names of the content
 
 ![Code names](img/codename.png)
 
-In addition to the element code names, the header row should also contain 4 other headers:
+In addition to the element code names, the header row should also contain 5 other headers:
 
 - __name__ (required): The name of the content item to create or update.
-- __external_id__ (optional): The [external ID](https://docs.kontent.ai/reference/management-api-v2#section/External-IDs-for-imported-content) of the content item to update (overrides name header).
+- __external_id__ (optional): The [external ID](https://docs.kontent.ai/reference/management-api-v2#section/External-IDs-for-imported-content) of the content item to update.
+- __codename__ (optional): The codename of the content item being created/updated.
 - __language__ (optional): The language of the variant to update. This should match the code name of a language in the project’s Localization page, and is case sensitive. If a language is not provided, the add-on will get the project's default language using Management API.
 - __currency_format__ (optional): Used to determine how values for Kontent "number" elements are parsed. US-formatted strings ("1,500.75") and EU-formatted strings ("1 500,75") are parsed into a valid number based on this setting. Should be either `US` or `EU`. If omitted or empty, US formatting will be used.
+
+:bulb: See the [Locating and updating existing items](#locating-and-updating-existing-items) section to read more about how existing items are located and how to update content item names and codenames.
 
 The following is an example of what a Sheet named __product__ might look like:
 
@@ -98,6 +101,18 @@ If enabled, an existing content item will attempt to be updated using the `exter
 After clicking the __Run__ button, please wait while the script runs. When it’s finished, a new window Sheet is created containing a detailed record of the operations taken per-row and general information:
 
 ![Import log](/img/log.png)
+
+## Locating and updating existing items
+
+Depending on what information is available in the sheet, existing items in your project are located differently:
+
+- If the row contains an `external_id`:  
+  - Existing items are located based on `external_id`. Name is ignored, and if the `external_id` is not found, a new item is created with that ID.
+  - For both new items and existing items, you are able to update the `name` and `codename` of the content item if those values are present in the row.
+- If there is no `external_id`:
+  - Existing items are located based on `name`. If no existing item is found with that name, a new item is created with that name.
+  - If a new item is created, you can specify the `codename` and `external_id` for the new item.
+  - If an existing item was found, you can only update the `codename` of the item. `external_id` cannot be updated, only specified on creation of the item.
 
 ## Batching
 
