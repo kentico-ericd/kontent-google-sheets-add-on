@@ -13,10 +13,7 @@ After installing, click the Kontent icon in the sidebar to load the Add-on's hom
 - Preview API key
 - Management API key
 
-# Usage
-A supplemental Kontent blog post containing usage details and examples can be found [here](https://kontent.ai/blog/migrating-content-from-spreadsheets).
-
-## Preparing the Sheet
+# Preparing the Sheet
 You may create a new Sheet or edit an existing one. The __Generate Sheet__ menu of the Add-on can also generate a new Sheet for you, along with the required headers, based on the project's content types.
 
 If you have a local spreadsheet file, you can open it in Google Sheets by uploading it to Google Drive, then selecting _Open with > Google Sheets_.
@@ -39,7 +36,7 @@ The headers (first row) of your Sheet must contain the code names of the content
 
 ![Code names](img/codename.png)
 
-In addition to the element code names, the header row should also contain 3 other headers:
+In addition to the element code names, the header row should also contain 4 other headers:
 
 - __name__ (required): The name of the content item to create or update.
 - __external_id__ (optional): The [external ID](https://docs.kontent.ai/reference/management-api-v2#section/External-IDs-for-imported-content) of the content item to update (overrides name header).
@@ -88,7 +85,7 @@ You can insert content item links, asset links, and inline content items by ente
 
 ![Macro menu](/img/macromenu.png)
 
-## Importing the Content
+# Importing the Content
 Click the Kontent icon in the sidebar and open the __Import__ menu. You have two options before starting the import:
 
 ![Import options](/img/import.png)
@@ -102,7 +99,7 @@ After clicking the __Run__ button, please wait while the script runs. When it’
 
 ![Import log](/img/log.png)
 
-### Batching
+## Batching
 
 The import process will run for a maximum of 30 seconds. If your Sheet contains a large amount of data that cannot be completed within 30 seconds, the import will be performed in batches. You will be shown a menu stating which rows were successfully processed, and you can click **Resume** to continue importing the Sheet.
 
