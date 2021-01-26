@@ -82,7 +82,7 @@ const cacheData = () => {
 }
 
 const loadCache = () => {
-  const cache = CacheService.getUserCache().getAll(keyList);Logger.log(cache);
+  const cache = CacheService.getUserCache().getAll(keyList);
   
   values = JSON.parse(cache[CACHE_VALUES_KEY]);
   importingRowNum = parseInt(cache[CACHE_ROW_KEY]);

@@ -141,8 +141,6 @@ const upsertItem = (itemId, codename, nameToUpdate, existingName) => {
     data.name = existingName;
   }
 
-  Logger.log(`upsertItem data=${JSON.stringify(data)}`);
-
   const itemResponse = executeRequest(ITEM_ID_ENDPOINT, 'put', data, {id: itemId});
   if(itemResponse.getResponseCode() === 200) {
     upsertResult.results.push(`Updated the ${updatedParts.join('/')} of item ${itemId}`);
