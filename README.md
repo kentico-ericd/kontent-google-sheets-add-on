@@ -91,6 +91,8 @@ After clicking the __Run__ button, please wait while the script runs. When it’
 
 ![Import log](/img/log.png)
 
+The import process will run for a maximum of 30 seconds. If your Sheet contains a large amount of data that cannot be completed within 30 seconds, the import will be performed in batches. You will be shown a menu stating which rows were successfully processed, and you can click **Resume** to continue importing the Sheet.
+
 # Contributing
 To develop and test this Google Script project, first install [this Chrome extension](https://chrome.google.com/webstore/detail/google-apps-script-github/lfjcgcmkmjjlieihflfhjopckgpelofo?hl=en) which integrates Google Scripts with Git. Then fork this repository and create a new Google Script project on https://script.google.com/.
 
