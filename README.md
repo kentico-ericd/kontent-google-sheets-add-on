@@ -3,7 +3,7 @@
 # ![Sheets](https://www.google.com/images/about/sheets-icon.svg) Google Sheets Import
 
 # Installation
-You can install this Google Workspace Add-on directly from Google Sheets using this button in the sidebar:
+You can install this Google Workspace Add-on [here](https://workspace.google.com/marketplace/app/kentico_kontent/482429381322) or directly from Google Sheets using this button in the sidebar:
 
 ![Install](img/install.png)
 
