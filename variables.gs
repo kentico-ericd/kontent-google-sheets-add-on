@@ -29,7 +29,8 @@ let langColumn = -1, nameColumn = -1, externalIdColumn = -1, currencyFormatColum
 let doUpdate = false, doPreload = false;
 
 // JSON objects for import results: main object for storing all results, single object used in each row
-let resultJSON = { rows: [], stats: {} }, upsertResult = {};
+let resultJSON = [], upsertResult = {};
+let resultSheetName = '';
 
 // Content item cache- ALL content items in project!
 let contentItemCache = {};
@@ -38,11 +39,7 @@ let contentItemCache = {};
 let mPID, mCMKEY, mPREVIEWKEY;
 
 // Caching
-const CACHE_VALUES_KEY = 'CACHE_VALUES',
-CACHE_ROW_KEY = 'CACHE_ROW',
-CACHE_CONTENTITEMS_KEY = 'CACHE_CONTENTITEMS',
-CACHE_RESULTS_KEY = 'CACHE_RESULTS',
-CACHE_CODENAME_KEY = 'CACHE_CODENAME',
+const CACHE_ROW_KEY = 'CACHE_ROW',
 CACHE_DOUPDATE_KEY = 'CACHE_DOUPDATE',
 CACHE_DOPRELOAD_KEY = 'CACHE_DOPRELOAD',
 CACHE_DEFAULTLANG_KEY = 'CACHE_DEFAULTLANG',
@@ -54,15 +51,14 @@ CACHE_VARIANTCOUNTER_KEY = 'CACHE_VARIANTCOUNTER',
 CACHE_ERRORCOUNTER_KEY = 'CACHE_ERRORCOUNTER',
 CACHE_WAITTIMES_KEY = 'CACHE_WAITTIMES',
 CACHE_TYPEID_KEY = 'CACHE_TYPEID',
-CACHE_TYPEELEMENTS_KEY = 'CACHE_TYPEELEMENTS';
-const keyList = [CACHE_VALUES_KEY, CACHE_ROW_KEY, CACHE_CONTENTITEMS_KEY, CACHE_RESULTS_KEY, CACHE_CODENAME_KEY, CACHE_DOUPDATE_KEY, CACHE_DOPRELOAD_KEY, CACHE_DEFAULTLANG_KEY, CACHE_PUBLISHSTEP_KEY, CACHE_DRAFTSTEP_KEY, CACHE_APICOUNTER_KEY, CACHE_ITEMCOUNTER_KEY, CACHE_VARIANTCOUNTER_KEY, CACHE_ERRORCOUNTER_KEY, CACHE_WAITTIMES_KEY, CACHE_TYPEID_KEY, CACHE_TYPEELEMENTS_KEY];
+CACHE_TYPEELEMENTS_KEY = 'CACHE_TYPEELEMENTS',
+CACHE_RESULTSHEET_KEY = 'CACHE_RESULTSHEET';
+const keyList = [CACHE_ROW_KEY, CACHE_DOUPDATE_KEY, CACHE_DOPRELOAD_KEY, CACHE_DEFAULTLANG_KEY, CACHE_PUBLISHSTEP_KEY, CACHE_DRAFTSTEP_KEY, CACHE_APICOUNTER_KEY, CACHE_ITEMCOUNTER_KEY, CACHE_VARIANTCOUNTER_KEY, CACHE_ERRORCOUNTER_KEY, CACHE_WAITTIMES_KEY, CACHE_TYPEID_KEY, CACHE_TYPEELEMENTS_KEY, CACHE_RESULTSHEET_KEY];
 
 const cacheData = () => {
   const data = {};
 
   data[CACHE_ROW_KEY] = importingRowNum.toString();
-  data[CACHE_RESULTS_KEY] = JSON.stringify(resultJSON);
-  data[CACHE_CODENAME_KEY] =  typeCodename;
   data[CACHE_DOUPDATE_KEY] = doUpdate.toString();
   data[CACHE_DOPRELOAD_KEY] = doPreload.toString();
   data[CACHE_DEFAULTLANG_KEY] = defaultLang;
@@ -73,10 +69,9 @@ const cacheData = () => {
   data[CACHE_VARIANTCOUNTER_KEY] = variantCounter.toString();
   data[CACHE_ERRORCOUNTER_KEY] = errorCounter.toString();
   data[CACHE_WAITTIMES_KEY] = waitTimes.toString();
-  data[CACHE_VALUES_KEY] = JSON.stringify(values);
-  data[CACHE_CONTENTITEMS_KEY] = JSON.stringify(contentItemCache);
   data[CACHE_TYPEID_KEY] = typeID;
   data[CACHE_TYPEELEMENTS_KEY] = JSON.stringify(typeElements);
+  data[CACHE_RESULTSHEET_KEY] = resultSheetName;
 
   CacheService.getUserCache().putAll(data);
 }
@@ -84,11 +79,7 @@ const cacheData = () => {
 const loadCache = () => {
   const cache = CacheService.getUserCache().getAll(keyList);
   
-  values = JSON.parse(cache[CACHE_VALUES_KEY]);
   importingRowNum = parseInt(cache[CACHE_ROW_KEY]);
-  contentItemCache = JSON.parse(cache[CACHE_CONTENTITEMS_KEY]);
-  resultJSON = JSON.parse(cache[CACHE_RESULTS_KEY]);
-  typeCodename = cache[CACHE_CODENAME_KEY];
   doUpdate = cache[CACHE_DOUPDATE_KEY] === 'true';
   doPreload = cache[CACHE_DOPRELOAD_KEY] === 'true';
   defaultLang = cache[CACHE_DEFAULTLANG_KEY];
@@ -101,6 +92,7 @@ const loadCache = () => {
   waitTimes = parseInt(cache[CACHE_WAITTIMES_KEY]);
   typeID = cache[CACHE_TYPEID_KEY];
   typeElements = JSON.parse(cache[CACHE_TYPEELEMENTS_KEY]);
+  resultSheetName = cache[CACHE_RESULTSHEET_KEY];
 }
 
 const clearCache = () => {
@@ -116,26 +108,4 @@ const loadKeys = () => {
   }
 
   return { "pid": mPID, "cmkey": mCMKEY, "previewkey": mPREVIEWKEY };
-}
-
-const resetGlobals = () => {
-  values = [];
-  importingRowNum = 1;
-  typeCodename = "";
-  defaultLang = "default";
-  startTime = new Date();
-  headers = [];
-  apiCounter = 0;
-  itemCounter = 0;
-  variantCounter = 0;
-  errorCounter = 0;
-  langColumn = -1;
-  nameColumn = -1;
-  externalIdColumn = -1;
-  doUpdate = false;
-  doPreload = false;
-  currencyFormatColumn = -1;
-  resultJSON = { rows: [], stats: {} };
-  contentItemCache = {};
-  waitTimes = 0;
 }

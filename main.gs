@@ -35,9 +35,9 @@ const getHeaders = () => {
 }
 
 /**
- * Load sheet data and project info. Should only be called from UI, not from timer
+ * Gets all sheet rows and the content type code name from the active sheet
  */
-const initVars = () => {
+const loadSheetValues = () => {
   // Get ALL values from sheet
   const sheet = SpreadsheetApp.getActiveSheet();
   values = sheet.getDataRange().getValues();
@@ -47,8 +47,33 @@ const initVars = () => {
     showAlert('Your sheet doesn\'t contain enough data to import!');
     return;
   }
+}
 
+/**
+ * If doPreload is enabled, content items are requested from the project and saved in process
+ */
+const checkPreload = () => {
+  // Load all content items into cache if enabled
+  if(doPreload) {
+    const itemsResponse = getAllContentItems();
+    if(itemsResponse.code === 200) {
+      contentItemCache = itemsResponse.data;
+    }
+    else {
+      // Couldn't load items for some reason.. disable preload
+      showAlert(`Couldn't load content items for cache: ${itemsResponse.data}... continuing without cache`);
+      doPreload = false;
+    }
+  }
+}
+
+/**
+ * Load sheet data and project info. Should only be called from UI Import menu, not from batching
+ */
+const initVars = () => {
+  loadSheetValues();
   getHeaders();
+  checkPreload();
 
   // Get default lang of project- if fails, we use "default"
   const langResponse = getDefaultLanguage();
@@ -72,19 +97,6 @@ const initVars = () => {
     else {
       showAlert(`Failed to load workflow steps: ${stepResponse.data}`);
       return;
-    }
-  }
-
-  // Load all content items into cache if enabled
-  if(doPreload) {
-    const itemsResponse = getAllContentItems();
-    if(itemsResponse.code === 200) {
-      contentItemCache = itemsResponse.data;
-    }
-    else {
-      // Couldn't load items for some reason.. disable preload
-      showAlert(`Couldn't load content items for cache: ${itemsResponse.data}... continuing without cache`);
-      doPreload = false;
     }
   }
 
@@ -121,10 +133,12 @@ const doImport = (e) => {
 const upsertChunk = (e) => {
   startTime = new Date();
 
-  // Load data from cache if function was called from timer
+  // Load data from cache and re-read Sheet if function was called from batching
   if(values.length === 0) {
     loadCache();
+    loadSheetValues();
     getHeaders();
+    checkPreload();
   }
 
   while (importingRowNum < values.length) {
@@ -137,11 +151,12 @@ const upsertChunk = (e) => {
     upsertRowData(values[importingRowNum]);
 
     // Add result json object to sheet result object
-    resultJSON.rows.push(upsertResult);
+    resultJSON.push(upsertResult);
     importingRowNum++;
 
     // Check if it's been 30 seconds, if so cache data and prompt user to re-run
     if (isTimeUp() && importingRowNum < values.length) {
+      updatePartialLog(e, false);
       cacheData();
 
       // Prompt user to re-run import for next chunk
@@ -149,13 +164,7 @@ const upsertChunk = (e) => {
     }
   }
 
-  // Import finished final row- show results
-  resultJSON.stats.apiCounter = apiCounter; 
-  resultJSON.stats.itemCounter = itemCounter;
-  resultJSON.stats.variantCounter = variantCounter;
-  resultJSON.stats.errorCounter = errorCounter;
-
-  return makeResultSheet(e);
+  return updatePartialLog(e, true);
 }
 
 const upsertRowData = (rowValues) => {
@@ -436,42 +445,79 @@ const showAlert = (message) => {
     ui.ButtonSet.OK);
 }
 
-const makeResultSheet = (e) => {
-  //TODO: locale not working- returns "en" not "en-US"
-  //const locale = e.commonEventObject.userLocale;
-  //const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const newSheet = ss.insertSheet(`Import log: ${new Date().toUTCString()}`);
-  const values = [];
+/**
+ * Creates the result Sheet if it doesn't exist. Appends results from the current chunk
+ */
+const updatePartialLog = (e, importComplete) => {
+  let values = [];
+  let sheet;
+  let nextEmptyRow = -1;
+  const numColumns = 5; // Increase if more headers are added
 
-  // Add stats (remember to fill empty cols with a value)
-  values.push(['Content type:', typeCodename, '', '', '']);
-  values.push(['Seconds spent throttled:', waitTimes/1000, '', '', '']);
-  values.push(['Total API Calls:', resultJSON.stats.apiCounter, '', '', '']);
-  values.push(['New content items:', resultJSON.stats.itemCounter, '', '', '']);
-  values.push(['Language variants updated:', resultJSON.stats.variantCounter, '', '', '']);
-  values.push(['Total Errors:', resultJSON.stats.errorCounter, '', '', '']);
-  values.push(['', '', '', '', '']);
-  values.push(['Row', 'Name', 'Created new item', 'Errors', 'Successes']);
+  if(resultSheetName === '') {
+    // Result sheet doesn't exist yet
+    resultSheetName = `Import log: ${new Date().toUTCString()}`;
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    sheet = ss.insertSheet(resultSheetName);
+
+    // Go back to import Sheet
+    const importedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(typeCodename);
+    SpreadsheetApp.setActiveSheet(importedSheet);
+
+    // Formatting
+    sheet.setColumnWidth(4, 200);
+    sheet.setColumnWidth(5, 200);
+
+    // Add headers
+    values.push(['Row', 'Name', 'Created new item', 'Errors', 'Successes']);
+  }
+  else {
+    //Get existing result sheet
+    sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(resultSheetName);
+  }
+
+  if(!sheet) {
+    showAlert('Result Sheet missing or cannot be created- did you delete it? Continuing import without log...');
+    return;
+  }
+  else {
+    // Find an empty row where we can append new data
+    nextEmptyRow = sheet.getLastRow() + 1;
+  }
 
   // Loop through individual import records
-  resultJSON.rows.forEach(row => {
+  resultJSON.forEach(row => {
     const errors = row.errors ? row.errors.join(', ') : '';
     const successes = row.results ? row.results.join(', ') : '';
     values.push([row.row, row.name, !row.updatedExisting, errors, successes]);
   });
 
-  // Formatting
-  newSheet.setColumnWidth(4, 200);
-  newSheet.setColumnWidth(5, 200);
-
-  const range = newSheet.getRange(1,1, values.length, 5); // Increase last param if more columns are added
+  const range = sheet.getRange(nextEmptyRow,1, values.length, numColumns);
   range.setValues(values);
-  newSheet.activate();
+  
+  if(importComplete) {
 
-  return navigateTo();
+    // Add stats (remember to fill empty cols with a value)
+    values = [];
+    values.push(['Content type:', typeCodename, '', '', '']);
+    values.push(['Seconds spent throttled:', waitTimes/1000, '', '', '']);
+    values.push(['Total API Calls:', apiCounter, '', '', '']);
+    values.push(['New content items:', itemCounter, '', '', '']);
+    values.push(['Language variants updated:', variantCounter, '', '', '']);
+    values.push(['Total Errors:', errorCounter, '', '', '']);
+    values.push(['', '', '', '', '']);
+
+    sheet.insertRowsBefore(1, values.length);
+    const range = sheet.getRange(1, 1, values.length, numColumns);
+    range.setValues(values);
+
+    sheet.activate();
+  }
 }
 
+/**
+ * Called from Generate menu, creates a Sheet with the content type code name
+ */
 const makeSheet = (e) => {
   const contentType = JSON.parse(e.commonEventObject.parameters.json);
 
