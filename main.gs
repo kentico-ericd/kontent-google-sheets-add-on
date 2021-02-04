@@ -432,20 +432,6 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, co
 }
 
 /**
------------------------------------------------
-  Sheet functions
------------------------------------------------
-**/
-
-const showAlert = (message) => {
-  let ui = SpreadsheetApp.getUi();
-  ui.alert(
-    'Error',
-    message,
-    ui.ButtonSet.OK);
-}
-
-/**
  * Creates the result Sheet if it doesn't exist. Appends results from the current chunk
  */
 const updatePartialLog = (e, importComplete) => {
@@ -512,34 +498,5 @@ const updatePartialLog = (e, importComplete) => {
     range.setValues(values);
 
     return showImportComplete(resultSheetName);
-  }
-}
-
-/**
- * Called from Generate menu, creates a Sheet with the content type code name
- */
-const makeSheet = (e) => {
-  const contentType = JSON.parse(e.commonEventObject.parameters.json);
-
-  // Check if sheet with code name already exists
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(contentType.codename);
-  if (sheet != null) {
-    showAlert('A sheet already exists with this content type code name.');
-    return;
-  }
-
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const newSheet = ss.insertSheet(contentType.codename);
-  const elements = getTypeElements(contentType);
-
-  // Generate headers
-  const range = newSheet.getRange(1, 1, 1, elements.length + 4);
-  range.getCell(1, 1).setValue('name');
-  range.getCell(1, 2).setValue('external_id');
-  range.getCell(1, 3).setValue('codename');
-  range.getCell(1, 4).setValue('currency_format').setNote('Set this to "US" (or leave empty) for numbers formatted like "1,000.50" or "EU" for "1 000,50" formatting.');
-
-  for (var i = 0; i < elements.length; i++) {
-    range.getCell(1, i + 5).setValue(elements[i].codename);
   }
 }

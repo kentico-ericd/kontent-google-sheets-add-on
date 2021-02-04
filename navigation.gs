@@ -237,11 +237,23 @@ const makeGenerateCard = () => {
   const response = loadTypes();
 
   if(response.code === 200) {
-    response.data.forEach(type => {
+    const types = response.data.sort(function(a, b) {
+      var val1 = a.name.toUpperCase();
+      var val2 = b.name.toUpperCase();
+      if (val1 < val2) {
+        return -1;
+      }
+      if (val1 > val2) {
+        return 1;
+      }
+
+      return 0;
+    });
+    types.forEach(type => {
       section.addWidget(
         CardService.newTextButton().setText(type.name)
         .setOnClickAction(CardService.newAction()
-          .setFunctionName('makeSheet')
+          .setFunctionName('makeSheetForType')
           .setParameters({ 'json': JSON.stringify(type) })));
     });
   }
@@ -270,6 +282,14 @@ const openUrl = (e) => {
   return CardService.newActionResponseBuilder()
     .setOpenLink(CardService.newOpenLink().setUrl(url).setOpenAs(CardService.OpenAs.OVERLAY))
     .build(); 
+}
+
+const showAlert = (message) => {
+  let ui = SpreadsheetApp.getUi();
+  ui.alert(
+    'Error',
+    message,
+    ui.ButtonSet.OK);
 }
 
 const makeImportCard = () => {
