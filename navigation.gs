@@ -103,6 +103,24 @@ const showImportProgress = (rowNum, totalRows) => {
     .build();
 }
 
+const showImportComplete = (logName) => {
+  const card = CardService.newCardBuilder()
+    .addSection(CardService.newCardSection()
+      .addWidget(CardService.newTextParagraph().setText('<b>Import complete</b>'))
+      .addWidget(CardService.newTextParagraph().setText(`Check the Sheet "${logName}" for a detailed log`)))
+    .setFixedFooter(CardService.newFixedFooter()
+      .setPrimaryButton(CardService.newTextButton()
+        .setText('Home')
+        .setOnClickAction(CardService.newAction()
+          .setFunctionName('navigateTo'))))
+    .build();
+  const nav = CardService.newNavigation().pushCard(card);
+
+  return CardService.newActionResponseBuilder()
+    .setNavigation(nav)
+    .build();
+}
+
 const navigateTo = (e = undefined) => {
   let nav;
   const cardName = e ?  e.parameters.card : '';

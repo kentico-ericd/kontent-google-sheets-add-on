@@ -511,7 +511,7 @@ const updatePartialLog = (e, importComplete) => {
     const range = sheet.getRange(1, 1, values.length, numColumns);
     range.setValues(values);
 
-    sheet.activate();
+    return showImportComplete(resultSheetName);
   }
 }
 
