@@ -123,4 +123,3 @@ To develop and test this Google Script project, first install [this Chrome exten
 
 Use the new menus added by the extension (Repository, Branch, ..) to pull the code from your forked repository into the Script project. After you've made the desired code changes, test the add-on in a Google Sheet using the _Run > Test as add-on_ menu.
 
-![Analytics](https://kentico-ga-beacon.azurewebsites.net/api/UA-69014260-4/Kentico/kontent-sheets-import?pixel)
