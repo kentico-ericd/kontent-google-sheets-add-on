@@ -231,7 +231,7 @@ const upsertRowData = (rowValues) => {
   }
 }
 
-const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, codename, name, foundBy = '') => {
+const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, itemCodename, name, foundBy = '') => {
   if (stopProcessing) {
     return;
   }
@@ -392,8 +392,8 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, co
     if(foundBy === 'name') {
 
       // We can update the codename
-      if(codename !== existingCodename) {
-        upsertItem(itemId, codename, '', existingName);
+      if(itemCodename !== existingCodename) {
+        upsertItem(itemId, itemCodename, '', existingName);
       }
     }
     else if(foundBy === 'external_id') {
@@ -402,7 +402,7 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, co
       let nameToUpdate = name;
       if(nameToUpdate === existingName) nameToUpdate = '';
 
-      let codenameToUpdate = codename;
+      let codenameToUpdate = itemCodename;
       if(codenameToUpdate === existingCodename) codenameToUpdate = '';
 
       if(nameToUpdate !== '' || codenameToUpdate !== '') {

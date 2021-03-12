@@ -1,7 +1,8 @@
 const CARD_SETTINGS = 'Project settings',
       CARD_GENERATE = 'Generate sheet',
       CARD_IMPORT = 'Import',
-      CARD_INSERT = 'Rich text macros';
+      CARD_INSERT = 'Rich text macros',
+      CARD_VALIDATE = 'Validate sheet';
 const KEY_DOUPDATE = 'doupdate_key',
       KEY_DOPRELOAD = 'dopreload_key',
       KEY_INLINEITEM_IDENTIFIERTYPE = 'inlineitem_identifiertype_key',
@@ -41,6 +42,12 @@ const showHomeCard = () => {
       .setOnClickAction(CardService.newAction()
         .setFunctionName('navigateTo')
         .setParameters({ 'card': CARD_INSERT }));
+  const validateButton = CardService.newTextButton()
+      .setText(CARD_VALIDATE)
+      .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
+      .setOnClickAction(CardService.newAction()
+        .setFunctionName('navigateTo')
+        .setParameters({ 'card': CARD_VALIDATE }));
 
   // Get connected project
   const keys = loadKeys();
@@ -77,6 +84,7 @@ const showHomeCard = () => {
       .addWidget(importButton)
       .addWidget(insertButton)
       .addWidget(generateButton)
+      .addWidget(validateButton)
       .addWidget(settingsButton))
     .setFixedFooter(fixedFooter)
     .build();
@@ -136,6 +144,9 @@ const navigateTo = (e = undefined) => {
       break;
     case CARD_INSERT:
       nav = CardService.newNavigation().pushCard(makeInsertCard());
+      break;
+    case CARD_VALIDATE:
+      nav = CardService.newNavigation().pushCard(makeValidateCard());
       break;
     default:
       nav = CardService.newNavigation().popToRoot();
@@ -290,6 +301,23 @@ const showAlert = (message) => {
     'Error',
     message,
     ui.ButtonSet.OK);
+}
+
+const makeValidateCard = () => {
+  const section = CardService.newCardSection()
+    .addWidget(CardService.newTextParagraph().setText('You can use this menu to validate Sheet cells before the import process runs, to avoid errors during import. Click the <b>Validate</b> button below, and a new menu will appear containing any invalid values.'));
+
+  const fixedFooter = CardService.newFixedFooter()
+    .setPrimaryButton(CardService.newTextButton()
+      .setText('Validate')
+      .setOnClickAction(CardService.newAction()
+        .setFunctionName('validateSheet')));
+
+  return CardService.newCardBuilder()
+    .setName(CARD_VALIDATE)
+    .addSection(section)
+    .setFixedFooter(fixedFooter)
+    .build();
 }
 
 const makeImportCard = () => {
