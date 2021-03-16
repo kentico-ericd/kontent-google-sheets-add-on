@@ -84,7 +84,7 @@ const showHomeCard = () => {
       .addWidget(importButton)
       .addWidget(insertButton)
       .addWidget(generateButton)
-      .addWidget(validateButton)
+      //.addWidget(validateButton)
       .addWidget(settingsButton))
     .setFixedFooter(fixedFooter)
     .build();
