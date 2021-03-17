@@ -71,9 +71,14 @@ const createNewItem = (name, externalId, codename) => {
   if(itemResponse.getResponseCode() === 201) {
     // Content item success
     itemCounter++;
+
+    // Add new item to cache in case we need to find it later
+    const item = JSON.parse(itemResponse.getContentText());
+    contentItemCache.push(item);
+
     return {
       code: itemResponse.getResponseCode(),
-      data: JSON.parse(itemResponse.getContentText())
+      data: item
     };
   }
   else {
@@ -101,6 +106,14 @@ const findById = (externalId) => {
   }
 }
 
+const findByCodename = (codename) => {
+  const response = executeGetRequest(ITEM_BYCODENAME_ENDPOINT, {codename: codename});
+  if(response.getResponseCode() === 200) {
+    // Success
+    return JSON.parse(response.getContentText())
+  }
+}
+
 const findByName = (name) => {
   const keys = loadKeys();
   // @ts-ignore
@@ -110,7 +123,8 @@ const findByName = (name) => {
     'contentType': 'application/json',
     'muteHttpExceptions': true,
     'headers': {
-      'Authorization': 'Bearer ' + keys.previewkey
+      'Authorization': 'Bearer ' + keys.previewkey,
+      'X-KC-Wait-For-Loading-New-Content': true
     }
   };
 
@@ -161,9 +175,9 @@ const upsertItem = (itemId, codename, nameToUpdate, existingName) => {
 }
 
 /**
- * Gets a content item by its name or external ID from cache or Kontent if cache not available. Returns an object where 'item' contains the located item, and 'foundBy' indicates which property the item was located with.
+ * Gets a content item by its name, codename, or external ID from cache or Kontent if cache not available. Returns an object where 'item' contains the located item, and 'foundBy' indicates which property the item was located with.
  */
-const getExistingItem = (name, externalId) => {
+const getExistingItem = (name, externalId, codename) => {
   let item;
   if(externalId !== '') {
     if(doPreload) {
@@ -179,6 +193,23 @@ const getExistingItem = (name, externalId) => {
       return {
         item: item,
         foundBy: 'external_id'
+      };
+    }
+  }
+  else if(codename !== '') {
+    if(doPreload) {
+      item = contentItemCache.filter(i => i.codename === codename && i.type.id === typeID)[0];
+      return {
+        item: item,
+        foundBy: 'codename'
+      };
+    }
+    else {
+      // Make MAPI request
+      item = findByCodename(codename);
+      return {
+        item: item,
+        foundBy: 'codename'
       };
     }
   }

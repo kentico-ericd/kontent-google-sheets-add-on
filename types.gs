@@ -19,9 +19,21 @@ const loadTypes = () => {
   const response = executeGetRequest(TYPES_ENDPOINT);
   if(response.getResponseCode() === 200) {
     // Success
+    const types = JSON.parse(response.getContentText()).types.sort(function(a, b) {
+      var val1 = a.name.toUpperCase();
+      var val2 = b.name.toUpperCase();
+      if (val1 < val2) {
+        return -1;
+      }
+      if (val1 > val2) {
+        return 1;
+      }
+
+      return 0;
+    });
     return {
       'code': 200,
-      'data': JSON.parse(response.getContentText()).types
+      'data': types
     };
   }
   // Failure
@@ -75,30 +87,31 @@ const getTypeElements = (type) => {
 }
 
 /**
- * Called from Generate menu, creates a Sheet with the content type code name
+ * Called from Generate and Export menu, creates a Sheet with the content type code name
  */
 const makeSheetForType = (e) => {
   const contentType = JSON.parse(e.commonEventObject.parameters.json);
 
   // Check if sheet with code name already exists
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(contentType.codename);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(contentType.codename);
   if (sheet != null) {
     showAlert('A sheet already exists with this content type code name.');
     return;
   }
-
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
   const newSheet = ss.insertSheet(contentType.codename);
   const elements = getTypeElements(contentType);
 
   // Generate headers
-  const range = newSheet.getRange(1, 1, 1, elements.length + 4);
-  range.getCell(1, 1).setValue('name');
-  range.getCell(1, 2).setValue('external_id');
-  range.getCell(1, 3).setValue('codename');
-  range.getCell(1, 4).setValue('currency_format').setNote('Set this to "US" (or leave empty) for numbers formatted like "1,000.50" or "EU" for "1 000,50" formatting.');
-
+  const headers = ['name', 'external_id', 'codename', 'language', 'currency_format'];
   for (var i = 0; i < elements.length; i++) {
-    range.getCell(1, i + 5).setValue(elements[i].codename);
+    headers.push(elements[i].codename);
   }
+
+  // Add component header to end
+  headers.push('rich_text_components');
+
+  const range = newSheet.getRange(1, 1, 1, headers.length);
+  range.setValues([headers]);
 }

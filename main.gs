@@ -23,6 +23,9 @@ const getHeaders = () => {
       case 'codename':
         codenameColumn = i;
         break;
+      case 'rich_text_components':
+        componentColumn = i;
+        break;
     }
     headers.push(value);
   }
@@ -54,9 +57,9 @@ const loadSheetValues = () => {
  */
 const checkPreload = () => {
   // Load all content items into cache if enabled
-  if(doPreload) {
+  if (doPreload) {
     const itemsResponse = getAllContentItems();
-    if(itemsResponse.code === 200) {
+    if (itemsResponse.code === 200) {
       contentItemCache = itemsResponse.data;
     }
     else {
@@ -120,7 +123,7 @@ const doImport = (e) => {
   clearCache();
 
   // Get form values from Import menu
-  if(e.commonEventObject.formInputs) {
+  if (e.commonEventObject.formInputs) {
     doUpdate = e.commonEventObject.formInputs[KEY_DOUPDATE] ? true : false;
     doPreload = e.commonEventObject.formInputs[KEY_DOPRELOAD] ? true : false;
   }
@@ -134,7 +137,7 @@ const upsertChunk = (e) => {
   startTime = new Date();
 
   // Load data from cache and re-read Sheet if function was called from batching
-  if(values.length === 0) {
+  if (values.length === 0) {
     loadCache();
     loadSheetValues();
     getHeaders();
@@ -160,7 +163,7 @@ const upsertChunk = (e) => {
       cacheData();
 
       // Prompt user to re-run import for next chunk
-      return showImportProgress(importingRowNum, values.length-1);
+      return showImportProgress(importingRowNum, values.length - 1);
     }
   }
 
@@ -185,7 +188,7 @@ const upsertRowData = (rowValues) => {
 
   if (!doUpdate) {
     const itemResponse = createNewItem(name, externalId, codename);
-    if(itemResponse.code === 201) {
+    if (itemResponse.code === 201) {
       // Item success
       const newItem = itemResponse.data;
       upsertResult.results.push(`Created new item with ID ${newItem.id}`);
@@ -200,12 +203,12 @@ const upsertRowData = (rowValues) => {
     }
   }
   else {
-    const itemResponse = getExistingItem(name, externalId);
+    const itemResponse = getExistingItem(name, externalId, codename);
     let existingItem = itemResponse.item;
     if (existingItem === undefined) {
       // No content item - create item, then variant
       const itemResponse = createNewItem(name, externalId, codename);
-      if(itemResponse.code === 201) {
+      if (itemResponse.code === 201) {
         // Item success
         existingItem = itemResponse.data;
         upsertResult.results.push(`Created new item with ID ${existingItem.id}`);
@@ -282,7 +285,16 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
   // Create JS object with only row data for headers that match type elements
   const elements = [];
   for (var i = 0; i < headers.length; i++) {
-    // Scan elements for code name
+
+    // Don't process pre-generated headers
+    if(i === nameColumn ||
+    i === codenameColumn ||
+    i === langColumn ||
+    i === currencyFormatColumn ||
+    i === componentColumn ||
+    i === externalIdColumn) continue;
+
+    // Scan elements in type for same code name as header
     for (var k = 0; k < typeElements.length; k++) {
       if (typeElements[k].codename === headers[i]) {
         // Found matching element
@@ -329,9 +341,37 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
 
             // Parse special ## macros
             value = parseRichText(value);
-            break;
+
+            // Load components from the rich_text_components column
+            let components = [];
+            if(componentColumn > -1) {
+              let componentData = rowValues[componentColumn];
+              if(componentData !== '') {
+                componentData = JSON.parse(componentData);
+                for(const comp of componentData) {
+                  if(value.includes(`object type="application/kenticocloud" data-type="component" data-id="${comp.id}"`)) {
+                    // Rich text contains reference to this component, add to array
+                    components.push(comp);
+                  }
+                }
+              }
+            }
+
+            elements.push({
+              'element': {
+                'codename': typeElements[k].codename
+              },
+              'value': value,
+              'components': components
+            });
+
+            // We manually added this element+value instead of after the switch
+            // so continue the foreach loop
+            continue;
           case "asset":
           case "modular_content":
+          case "multiple_choice":
+          case "taxonomy":
 
             // Value should be in format "<identifier type>:<identifier>,<identifier type>:<identifier>"
             // Split into expected format value:[{ <identifier type>: <identifier> }, { <identifier type>: <identifier> }]
@@ -347,24 +387,7 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
             break;
           case "date_time":
 
-            value = tryFormatDateTime(typeElements[k].codename, value);
-            break;
-          case "multiple_choice":
-          case "taxonomy":
-
-            // Values should be comma-separated code names
-            if (value.length > 0) {
-              let ar = value.split(',');
-              value = [];
-              for (var v = 0; v < ar.length; v++) {
-
-                // Ensure lowercase for codenames
-                var codename = ar[v].trim().toLowerCase();
-                value.push({
-                  "codename": codename
-                });
-              }
-            }
+            if(value !== '') value = tryFormatDateTime(typeElements[k].codename, value);
             break;
         }
 
@@ -385,34 +408,41 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
   if (stopProcessing) return;
 
   // Check if we should update name or codename. If item is new, those values are already up-to-date
-  if(!isNew) {
+  if (!isNew) {
 
     const existingCodename = (existingItem.codename) ? existingItem.codename : existingItem.system.codename;
     const existingName = (existingItem.name) ? existingItem.name : existingItem.system.name;
-    if(foundBy === 'name') {
+    if (foundBy === 'name') {
 
       // We can update the codename
-      if(itemCodename !== existingCodename) {
+      if (itemCodename !== existingCodename) {
         upsertItem(itemId, itemCodename, '', existingName);
       }
     }
-    else if(foundBy === 'external_id') {
+    else if (foundBy === 'codename') {
+
+      // We can update the name only
+      if (name !== existingName) {
+        upsertItem(itemId, '', name, existingName);
+      }
+    }
+    else if (foundBy === 'external_id') {
 
       // We can update both codename and name, check if either of them are different from existing item found
       let nameToUpdate = name;
-      if(nameToUpdate === existingName) nameToUpdate = '';
+      if (nameToUpdate === existingName) nameToUpdate = '';
 
       let codenameToUpdate = itemCodename;
-      if(codenameToUpdate === existingCodename) codenameToUpdate = '';
+      if (codenameToUpdate === existingCodename) codenameToUpdate = '';
 
-      if(nameToUpdate !== '' || codenameToUpdate !== '') {
+      if (nameToUpdate !== '' || codenameToUpdate !== '') {
         upsertItem(itemId, codenameToUpdate, nameToUpdate, existingName);
       }
     }
   }
 
   const variantResponse = updateVariant(elements, itemId, lang);
-  if(variantResponse.code === 200 || variantResponse.code === 201) {
+  if (variantResponse.code === 200 || variantResponse.code === 201) {
     // Variant success
     variantCounter++;
     upsertResult.results.push(`Updated "${lang}" language variant`);
@@ -421,7 +451,7 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
     // Variant failure
     errorCounter++;
     stopProcessing = true;
-    if(variantResponse.data.validation_errors) {
+    if (variantResponse.data.validation_errors) {
       responseText = variantResponse.data.validation_errors[0].message;
     }
     else {
@@ -440,7 +470,7 @@ const updatePartialLog = (e, importComplete) => {
   let nextEmptyRow = -1;
   const numColumns = 5; // Increase if more headers are added
 
-  if(resultSheetName === '') {
+  if (resultSheetName === '') {
     // Result sheet doesn't exist yet
     resultSheetName = `Import log: ${new Date().toUTCString()}`;
     const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -462,7 +492,7 @@ const updatePartialLog = (e, importComplete) => {
     sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(resultSheetName);
   }
 
-  if(!sheet) {
+  if (!sheet) {
     showAlert('Result Sheet missing or cannot be created- did you delete it? Continuing import without log...');
     return;
   }
@@ -478,15 +508,15 @@ const updatePartialLog = (e, importComplete) => {
     values.push([row.row, row.name, !row.updatedExisting, errors, successes]);
   });
 
-  const range = sheet.getRange(nextEmptyRow,1, values.length, numColumns);
+  const range = sheet.getRange(nextEmptyRow, 1, values.length, numColumns);
   range.setValues(values);
-  
-  if(importComplete) {
+
+  if (importComplete) {
 
     // Add stats (remember to fill empty cols with a value)
     values = [];
     values.push(['Content type:', typeCodename, '', '', '']);
-    values.push(['Seconds spent throttled:', waitTimes/1000, '', '', '']);
+    values.push(['Seconds spent throttled:', waitTimes / 1000, '', '', '']);
     values.push(['Total API Calls:', apiCounter, '', '', '']);
     values.push(['New content items:', itemCounter, '', '', '']);
     values.push(['Language variants updated:', variantCounter, '', '', '']);
