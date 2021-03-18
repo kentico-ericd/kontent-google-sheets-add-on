@@ -1,10 +1,12 @@
 const CARD_SETTINGS = 'Project settings',
       CARD_GENERATE = 'Generate sheet',
       CARD_IMPORT = 'Import',
+      CARD_EXPORT = 'Export',
       CARD_INSERT = 'Rich text macros',
       CARD_VALIDATE = 'Validate sheet';
 const KEY_DOUPDATE = 'doupdate_key',
       KEY_DOPRELOAD = 'dopreload_key',
+      KEY_TRANSLATEIDS = 'dotranslate_key',
       KEY_INLINEITEM_IDENTIFIERTYPE = 'inlineitem_identifiertype_key',
       KEY_INLINEITEM_IDENTIFIER = 'inlineitem_identifier_key',
       KEY_ITEMLINK_IDENTIFIER = 'itemlink_identifier_key',
@@ -15,8 +17,25 @@ const KEY_DOUPDATE = 'doupdate_key',
       KEY_ASSETLINK_TEXT = 'assetlink_text_key';
 const VALUE_IDENTIFIERTYPE_ID = 'id',
       VALUE_IDENTIFIERTYPE_EXTERNAL = 'external_id';
+const MESSAGE_KEY_FORMAT = `USERSEEN_{id}`,
+      MESSAGES = [
+  { id: 'UPDATE_EXPORT_BETA', title: 'New update!', text: 'The new Export feature has just been added, which allows you to export content items from Kontent into Sheets. Please see https://github.com/Kentico/kontent-google-sheets-add-on#exporting-items-from-kontent for more information.\n\nAs the feature has just released, it should be considered in beta. Please do not use the feature in production environments without testing first!' }
+];
+
+const checkMessages = () => {
+  const cache = CacheService.getUserCache();
+  for(const msg of MESSAGES) {
+    const key = MESSAGE_KEY_FORMAT.formatUnicorn({id: msg.id});
+    if(!cache.get(key)) {
+      showAlert(msg.text, msg.title);
+      cache.put(key, 'true');
+    }
+  }
+}
 
 const showHomeCard = () => {
+  checkMessages();
+
   // Nav buttons
   const settingsButton = CardService.newTextButton()
       .setText(CARD_SETTINGS)
@@ -48,6 +67,12 @@ const showHomeCard = () => {
       .setOnClickAction(CardService.newAction()
         .setFunctionName('navigateTo')
         .setParameters({ 'card': CARD_VALIDATE }));
+  const exportButton = CardService.newTextButton()
+      .setText(CARD_EXPORT)
+      .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
+      .setOnClickAction(CardService.newAction()
+        .setFunctionName('navigateTo')
+        .setParameters({ 'card': CARD_EXPORT }));
 
   // Get connected project
   const keys = loadKeys();
@@ -76,16 +101,26 @@ const showHomeCard = () => {
       .setText("Help")
       .setOnClickAction(CardService.newAction()
         .setFunctionName('openUrl')
-        .setParameters({ 'url': 'https://github.com/Kentico/kontent-google-sheets-add-on#usage' })));
+        .setParameters({ 'url': 'https://github.com/Kentico/kontent-google-sheets-add-on#-google-sheets-import' })));
 
   const homeCard = CardService.newCardBuilder()
     .addSection(CardService.newCardSection()
-      .addWidget(projectInfo)
+      .addWidget(projectInfo))
+    .addSection(CardService.newCardSection()
       .addWidget(importButton)
+      .addWidget(CardService.newTextParagraph().setText('Transfer rows from Sheets to Kontent')))
+    .addSection(CardService.newCardSection()
+      .addWidget(exportButton)
+      .addWidget(CardService.newTextParagraph().setText('Transfer content items from Kontent to Sheets')))
+    .addSection(CardService.newCardSection()
       .addWidget(insertButton)
+      .addWidget(CardService.newTextParagraph().setText('Insert links and items into rich text')))
+    .addSection(CardService.newCardSection()
       .addWidget(generateButton)
-      //.addWidget(validateButton)
-      .addWidget(settingsButton))
+      .addWidget(CardService.newTextParagraph().setText('Create a new Sheet from a content type')))
+    .addSection(CardService.newCardSection()
+      .addWidget(settingsButton)
+      .addWidget(CardService.newTextParagraph().setText('Set your project API keys')))
     .setFixedFooter(fixedFooter)
     .build();
     
@@ -138,6 +173,9 @@ const navigateTo = (e = undefined) => {
       break;
     case CARD_IMPORT:
       nav = CardService.newNavigation().pushCard(makeImportCard());
+      break;
+    case CARD_EXPORT:
+      nav = CardService.newNavigation().pushCard(makeExportCard());
       break;
     case CARD_SETTINGS:
       nav = CardService.newNavigation().pushCard(makeSettingsCard());
@@ -248,18 +286,7 @@ const makeGenerateCard = () => {
   const response = loadTypes();
 
   if(response.code === 200) {
-    const types = response.data.sort(function(a, b) {
-      var val1 = a.name.toUpperCase();
-      var val2 = b.name.toUpperCase();
-      if (val1 < val2) {
-        return -1;
-      }
-      if (val1 > val2) {
-        return 1;
-      }
-
-      return 0;
-    });
+    const types = response.data;
     types.forEach(type => {
       section.addWidget(
         CardService.newTextButton().setText(type.name)
@@ -295,12 +322,40 @@ const openUrl = (e) => {
     .build(); 
 }
 
-const showAlert = (message) => {
+const showAlert = (message, title = 'Message') => {
   let ui = SpreadsheetApp.getUi();
   ui.alert(
-    'Error',
+    title,
     message,
     ui.ButtonSet.OK);
+}
+
+const makeExportCard = () => {
+  const translateIdSwitch = CardService.newKeyValue()
+    .setTopLabel("Translate IDs")
+    .setContent("The Management API always returns IDs, so elements like taxonomy will not be importable into projects where the IDs differ. Enable this option to translate IDs into codenames or external-ids, so references to objects can be imported between multiple projects where those identifiers match.")
+    .setMultiline(true)
+    .setSwitch(CardService.newSwitch()
+      .setSelected(false)
+      .setFieldName(KEY_TRANSLATEIDS)
+      .setValue('false'));
+
+  const section = CardService.newCardSection()
+    .addWidget(CardService.newTextParagraph().setText('Click the <b>Export</b> button to export all content items from your Kontent project into new Sheets. A Sheet will be created per content type, and content items of that type will appear as rows of that Sheet.'))
+    .addWidget(CardService.newTextParagraph().setText('Please delete any existing Sheets with same name as a content type in your project before running the export.'))
+    .addWidget(translateIdSwitch);
+
+  const fixedFooter = CardService.newFixedFooter()
+    .setPrimaryButton(CardService.newTextButton()
+      .setText('Export')
+      .setOnClickAction(CardService.newAction()
+        .setFunctionName('exportContentItems')));
+
+  return CardService.newCardBuilder()
+    .setName(CARD_EXPORT)
+    .addSection(section)
+    .setFixedFooter(fixedFooter)
+    .build();
 }
 
 const makeValidateCard = () => {
