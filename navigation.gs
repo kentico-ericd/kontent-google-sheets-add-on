@@ -19,15 +19,15 @@ const VALUE_IDENTIFIERTYPE_ID = 'id',
       VALUE_IDENTIFIERTYPE_EXTERNAL = 'external_id';
 const MESSAGE_KEY_FORMAT = `USERSEEN_{id}`,
       MESSAGES = [
-  { id: 'UPDATE_EXPORT_BETA', title: 'New update!', text: 'We just released a new feature' }
+  { id: 'UPDATE_EXPORT_BETA', title: 'New update!', text: 'The new Export feature has just been added, which allows you to export content items from Kontent into Sheets. Please see https://github.com/Kentico/kontent-google-sheets-add-on#exporting-items-from-kontent for more information.\n\nAs the feature has just released, it should be considered in beta. Please do not use the feature in production environments without testing first!' }
 ];
 
 const checkMessages = () => {
   const cache = CacheService.getUserCache();
   for(const msg of MESSAGES) {
-    const key = MESSAGE_KEY_FORMAT.formatUnicorn({id: msg.id});cache.remove(key);
+    const key = MESSAGE_KEY_FORMAT.formatUnicorn({id: msg.id});
     if(!cache.get(key)) {
-      showAlert(msg.text, title);
+      showAlert(msg.text, msg.title);
       cache.put(key, 'true');
     }
   }
@@ -111,7 +111,7 @@ const showHomeCard = () => {
       .addWidget(CardService.newTextParagraph().setText('Transfer rows from Sheets to Kontent')))
     .addSection(CardService.newCardSection()
       .addWidget(exportButton)
-      .addWidget(CardService.newTextParagraph().setText('<b>Beta!</b> Transfer content items from Kontent to Sheets')))
+      .addWidget(CardService.newTextParagraph().setText('Transfer content items from Kontent to Sheets')))
     .addSection(CardService.newCardSection()
       .addWidget(insertButton)
       .addWidget(CardService.newTextParagraph().setText('Insert links and items into rich text')))

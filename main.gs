@@ -378,7 +378,7 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
             let ar = value.split(",");
             value = [];
             for (var a = 0; a < ar.length; a++) {
-              // Individual asset from list
+              // Individual reference from list
               const record = ar[a].split(":");
               if (record.length === 2) {
                 value.push({ [record[0]]: record[1] });
