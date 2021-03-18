@@ -161,9 +161,7 @@ The import process will run for a maximum of 30 seconds. If your Sheet contains 
 
 # Exporting items from Kontent
 
-Using the __Export__ menu, you can save all your content items in Google Sheets, allowing you to create backups to import into the same project or even other projects.
-
-When you export your items, the add-on will generate a new Sheet for each content type in the project. Then, each Sheet will be populated with the content items of that type.
+Using the __Export__ menu, you can save all your content items in Google Sheets, allowing you to create backups to import into the same project or even other projects. When you export your items, the add-on will generate a new Sheet for each content type in the project. Then, each Sheet will be populated with the content items of that type.
 
 There is an optional __Translate IDs__ setting you can enable before exporting. This add-on uses the Management API to retrieve your data, and references to objects like taxonomy, assets, etc. use the internal `id` of the object. If you enable this setting, the ID will be converted into either a `codename` or `external_id` if available.
 
