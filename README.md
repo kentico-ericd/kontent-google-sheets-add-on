@@ -2,19 +2,30 @@
 
 # ![Sheets](https://www.google.com/images/about/sheets-icon.svg) Google Sheets Import
 
+- [Installation](#installation)
+- [Preparing the Sheet](#preparing-the-sheet)
+  - [Setting the headers](#setting-the-headers)
+- [Formatting cell values](#formatting-cell-values)
+  - [Setting Rich Text values](#setting-rich-text-values)
+  - [Components in Rich Text](#components-in-rich-text)
+- [Importing the content](#importing-the-content)
+  - [Locating and updating existing items](#locating-and-updating-existing-items)
+  - [Batching](#batching)
+- [Exporting items from Kontent](#exporting-items-from-kontent)
+
 # Installation
-You can install this Google Workspace Add-on [here](https://workspace.google.com/marketplace/app/kentico_kontent/482429381322) or directly from Google Sheets using this button in the sidebar:
+You can install this Google Workspace add-on [here](https://workspace.google.com/marketplace/app/kentico_kontent/482429381322) or directly from Google Sheets using this button in the sidebar:
 
 ![Install](img/install.png)
 
-After installing, click the Kontent icon in the sidebar to load the Add-on's home page. Locate the following API keys in Kontent, then add them in the Addon's __Project settings__ menu, 
+After installing, click the Kontent icon in the sidebar to load the add-on's home page. Locate the following API keys in Kontent, then add them in the addon's __Project settings__ menu, 
 
 - Project ID
 - Preview API key
 - Management API key
 
 # Preparing the Sheet
-You may create a new Sheet or edit an existing one. The __Generate Sheet__ menu of the Add-on can also generate a new Sheet for you, along with the required headers, based on the project's content types.
+You may create a new Sheet or edit an existing one. The __Generate Sheet__ menu of the add-on can also generate a new Sheet for you, along with the required headers, based on the project's content types.
 
 If you have a local spreadsheet file, you can open it in Google Sheets by uploading it to Google Drive, then selecting _Open with > Google Sheets_.
 
@@ -32,17 +43,18 @@ If you used the __Generate Sheet__ menu to create the Sheet, the code name of th
 
 ## Setting the headers
 
-The headers (first row) of your Sheet must contain the code names of the content type's elements. If you use the __Generate Sheet__ menu of the Add-on, these headers will be automatically generated. If adding headers manually, you can find the code names of the elements when editing the content type in https://app.kontent.ai.
+The headers (first row) of your Sheet must contain the code names of the content type's elements. If you use the __Generate Sheet__ menu of the add-on, these headers will be automatically generated. If adding headers manually, you can find the code names of the elements when editing the content type in https://app.kontent.ai.
 
 ![Code names](img/codename.png)
 
-In addition to the element code names, the header row should also contain 5 other headers:
+In addition to the element code names, the header row can also contain these other headers:
 
 - __name__ (required): The name of the content item to create or update.
 - __external_id__ (optional): The [external ID](https://docs.kontent.ai/reference/management-api-v2#section/External-IDs-for-imported-content) of the content item to update.
 - __codename__ (optional): The codename of the content item being created/updated.
 - __language__ (optional): The language of the variant to update. This should match the code name of a language in the project’s Localization page, and is case sensitive. If a language is not provided, the add-on will get the project's default language using Management API.
 - __currency_format__ (optional): Used to determine how values for Kontent "number" elements are parsed. US-formatted strings ("1,500.75") and EU-formatted strings ("1 500,75") are parsed into a valid number based on this setting. Should be either `US` or `EU`. If omitted or empty, US formatting will be used.
+- __rich_text_components__ (optional): JSON data of components used in all rich text elements of the row. See [Components in rich text](#components-in-rich-text)
 
 :bulb: See the [Locating and updating existing items](#locating-and-updating-existing-items) section to read more about how existing items are located and how to update content item names and codenames.
 
@@ -66,9 +78,14 @@ If you are using EU formatting, we recommend changing any Number columns in the 
 
 - __Date & Time__: The script will first try to parse the value using the JavaScript [Date(string) constructor](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date), so any valid DateTime string will succeed. A typical valid string would be in the format `mm/dd/yyyy hh:mm am/pm`. The script will also accept strings that use dashes instead of slashes (`12-25-2019 6:00 AM`) or timestamps from SQL (`2019-12-25 06:00:00.0000000`).
 - __URL Slug__: There is no special formatting needed for URL Slug elements. If a value is provided, the element's `mode` will be changed to "custom" and no longer auto-generate based on another content type element. To revert the URL Slug element back to auto-generation, set the value to `#autogenerate#`.
-- __Taxonomy and Multiple Choice__: Values should be the code name of the items, separated by a comma (for example `on_sale, bestseller`)
-- __Assets__: Values for Asset elements should be a comma-separated list, as the element can accept multiple Assets. The format for a single asset is `<identifier type>:<identifier>` where the type is either "id" or "external_id" and the identifier is the corresponding value. An example of updating multiple Assets at once is `id:0013263e-f2a9-40b1-9a3e-7ab6510bafe5,id:08bf515c-3b0e-4760-907b-6db0a22d41f3`.
-- __Linked Items__: The value of this cell is the same as Assets. It should be a comma-separated list of items in the format `<identifier type>:<identifier>`. You can use _id_, _external_id_, or _codename_ to reference content items, for example: `codename:birthday_party,id:eba1015a-dfd4-5736-abc1-5de3ed5df732`.
+- __Taxonomy, Multiple Choice, Assets, Linked items__: Values for these elements follow the same format:  `<identifier type>:<identifier>` in a comma-separated list. The identifier can be `id`, `codename`, or `external_id` depending on the type of element.  
+An example of multiple linked items in an element is `codename:birthday_party,id:eba1015a-dfd4-5736-abc1-5de3ed5df732`. You can find the supported reference types for each element in [our documentation](https://docs.kontent.ai/reference/management-api-v2#tag/Elements-in-language-variants), or in the table below:
+  | Element         | Allowed references         |
+  | --------------- | -------------------------- |
+  | Asset           | id, external_id            |
+  | Linked items    | id, external_id, codename  |
+  | Multiple choice | id, codename               |
+  | Taxonomy        | id, external_id, codename  |  
 
 ### Setting Rich Text values
 
@@ -88,6 +105,34 @@ You can insert content item links, asset links, and inline content items by ente
 
 ![Macro menu](/img/macromenu.png)
 
+### Components in rich text
+
+You can use the `rich_text_components` column to store all components of a content item, regardless of how many Rich Text elements it contains. When exporting items from Kontent, the components are automatically generated.
+For example, if you have a Rich Text element that contains this component:
+
+```
+<object type="application/kenticocloud" data-type="component" data-id="382abced-bfb6-4ee9-a2d4-2c3b8cd8ba5d"></object>
+```
+
+then the `rich_text_components` must contain a component with that ID, or the import will fail. The format of components can be found in [our documentation](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/component-object). Using the above example, the `rich_text_components` value could look like this:
+
+```
+{
+  "id": "382abced-bfb6-4ee9-a2d4-2c3b8cd8ba5d",
+  "type": {
+    "codename": "article"
+  },
+  "elements": [
+    {
+      "element": {
+        "id": "975bf280-fd91-488c-994c-2f04416e5ee3"
+      },
+      "value": "This is some text in the component"
+    }
+  ]
+}
+```
+
 # Importing the Content
 Click the Kontent icon in the sidebar and open the __Import__ menu. You have two options before starting the import:
 
@@ -104,22 +149,28 @@ After clicking the __Run__ button, please wait while the script runs. When it’
 
 ## Locating and updating existing items
 
-Depending on what information is available in the sheet, existing items in your project are located differently:
+Depending on what information is available in the sheet, existing items in your project are located differently. This is the order in which values are used to locate existing items:
 
-- If the row contains an `external_id`:  
-  - Existing items are located based on `external_id`. Name is ignored, and if the `external_id` is not found, a new item is created with that ID.
-  - For both new items and existing items, you are able to update the `name` and `codename` of the content item if those values are present in the row.
-- If there is no `external_id`:
-  - Existing items are located based on `name`. If no existing item is found with that name, a new item is created with that name.
-  - If a new item is created, you can specify the `codename` and `external_id` for the new item.
-  - If an existing item was found, you can only update the `codename` of the item. `external_id` cannot be updated, only specified on creation of the item.
+1. __external_id__: If not found, a new item is created with this ID. For both new items and existing items found this way, you are able to update the `name` and `codename` of the content item if those values are present in the row.
+1. __codename__: If not found, a new item is created with this codename. When updating existing items found this way, you can only update the `name`.
+1. __name__: If not found, a new item is created with this name. For new items created this way, you can set the `codename` and `external_id`. If an existing item was found, you can only update the `codename` of the item.
 
 ## Batching
 
 The import process will run for a maximum of 30 seconds. If your Sheet contains a large amount of data that cannot be completed within 30 seconds, the import will be performed in batches. You will be shown a menu stating which rows were successfully processed, and you can click **Resume** to continue importing the Sheet.
 
+# Exporting items from Kontent
+
+Using the __Export__ menu, you can save all your content items in Google Sheets, allowing you to create backups to import into the same project or even other projects.
+
+When you export your items, the add-on will generate a new Sheet for each content type in the project. Then, each Sheet will be populated with the content items of that type.
+
+There is an optional __Translate IDs__ setting you can enable before exporting. This add-on uses the Management API to retrieve your data, and references to objects like taxonomy, assets, etc. use the internal `id` of the object. If you enable this setting, the ID will be converted into either a `codename` or `external_id` if available.
+
+This is helpful if you are considering exporting items from Project A and into Project B. Both projects may have a taxonomy term called "Events," but the `id` of the term will be different. If the codename is "events" in both projects, the content items which reference that taxonomy term can be imported without any issues.
+
 # Contributing
 To develop and test this Google Script project, first install [this Chrome extension](https://chrome.google.com/webstore/detail/google-apps-script-github/lfjcgcmkmjjlieihflfhjopckgpelofo?hl=en) which integrates Google Scripts with Git. Then fork this repository and create a new Google Script project on https://script.google.com/.
 
-Use the new menus added by the extension (Repository, Branch, ..) to pull the code from your forked repository into the Script project. After you've made the desired code changes, test the add-on in a Google Sheet using the _Run > Test as add-on_ menu.
+Use the new menus added by the extension (Repository, Branch, ..) to pull the code from your forked repository into the Script project. After you've made the desired code changes, test the add-on in a Google Sheet using the Deploy > Test deployments_ menu.
 
