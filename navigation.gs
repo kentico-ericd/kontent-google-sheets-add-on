@@ -17,8 +17,25 @@ const KEY_DOUPDATE = 'doupdate_key',
       KEY_ASSETLINK_TEXT = 'assetlink_text_key';
 const VALUE_IDENTIFIERTYPE_ID = 'id',
       VALUE_IDENTIFIERTYPE_EXTERNAL = 'external_id';
+const MESSAGE_KEY_FORMAT = `USERSEEN_{id}`,
+      MESSAGES = [
+  { id: 'UPDATE_EXPORT_BETA', title: 'New update!', text: 'We just released a new feature' }
+];
+
+const checkMessages = () => {
+  const cache = CacheService.getUserCache();
+  for(const msg of MESSAGES) {
+    const key = MESSAGE_KEY_FORMAT.formatUnicorn({id: msg.id});cache.remove(key);
+    if(!cache.get(key)) {
+      showAlert(msg.text, title);
+      cache.put(key, 'true');
+    }
+  }
+}
 
 const showHomeCard = () => {
+  checkMessages();
+
   // Nav buttons
   const settingsButton = CardService.newTextButton()
       .setText(CARD_SETTINGS)
@@ -84,17 +101,26 @@ const showHomeCard = () => {
       .setText("Help")
       .setOnClickAction(CardService.newAction()
         .setFunctionName('openUrl')
-        .setParameters({ 'url': 'https://github.com/Kentico/kontent-google-sheets-add-on#usage' })));
+        .setParameters({ 'url': 'https://github.com/Kentico/kontent-google-sheets-add-on#-google-sheets-import' })));
 
   const homeCard = CardService.newCardBuilder()
     .addSection(CardService.newCardSection()
-      .addWidget(projectInfo)
+      .addWidget(projectInfo))
+    .addSection(CardService.newCardSection()
       .addWidget(importButton)
+      .addWidget(CardService.newTextParagraph().setText('Transfer rows from Sheets to Kontent')))
+    .addSection(CardService.newCardSection()
       .addWidget(exportButton)
+      .addWidget(CardService.newTextParagraph().setText('<b>Beta!</b> Transfer content items from Kontent to Sheets')))
+    .addSection(CardService.newCardSection()
       .addWidget(insertButton)
+      .addWidget(CardService.newTextParagraph().setText('Insert links and items into rich text')))
+    .addSection(CardService.newCardSection()
       .addWidget(generateButton)
-      //.addWidget(validateButton)
-      .addWidget(settingsButton))
+      .addWidget(CardService.newTextParagraph().setText('Create a new Sheet from a content type')))
+    .addSection(CardService.newCardSection()
+      .addWidget(settingsButton)
+      .addWidget(CardService.newTextParagraph().setText('Set your project API keys')))
     .setFixedFooter(fixedFooter)
     .build();
     
@@ -296,10 +322,10 @@ const openUrl = (e) => {
     .build(); 
 }
 
-const showAlert = (message) => {
+const showAlert = (message, title = 'Message') => {
   let ui = SpreadsheetApp.getUi();
   ui.alert(
-    'Error',
+    title,
     message,
     ui.ButtonSet.OK);
 }
