@@ -4,7 +4,7 @@
 const execute = (url, options) => {
   apiCounter++;
   let response = UrlFetchApp.fetch(url, options);
-  if(response.getResponseCode() === 429) {
+  if (response.getResponseCode() === 429) {
 
     // API limit exceeded, wait and retry
     let waitTime = response.getHeaders()["Retry-After"];
@@ -25,8 +25,8 @@ const execute = (url, options) => {
 **/
 const executeGetRequest = (endpoint, args) => {
   const keys = loadKeys();
-  let url = endpoint.formatUnicorn({project_id: keys.pid});
-  if(args) url = url.formatUnicorn(args);
+  let url = endpoint.formatUnicorn({ project_id: keys.pid });
+  if (args) url = url.formatUnicorn(args);
   const options = {
     'method': 'get',
     'contentType': 'application/json',
@@ -46,8 +46,8 @@ const executeGetRequest = (endpoint, args) => {
 **/
 const executeRequest = (endpoint, method, data, args) => {
   const keys = loadKeys();
-  let url = endpoint.formatUnicorn({project_id: keys.pid});
-  if(args) url = url.formatUnicorn(args);
+  let url = endpoint.formatUnicorn({ project_id: keys.pid });
+  if (args) url = url.formatUnicorn(args);
   let options = {
     'method': method,
     'contentType': 'application/json',
@@ -56,9 +56,9 @@ const executeRequest = (endpoint, method, data, args) => {
       'Authorization': 'Bearer ' + keys.cmkey
     }
   };
-  if(data) {
+  if (data) {
     options['payload'] = JSON.stringify(data);
   }
-  
+
   return execute(url, options);
 }

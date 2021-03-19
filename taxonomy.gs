@@ -1,15 +1,15 @@
 const getAllTaxonomyTerms = () => {
   let allTerms = [];
   const response = executeGetRequest(TAXONOMY_ENDPOINT);
-  if(response.getResponseCode() === 200) {
+  if (response.getResponseCode() === 200) {
     let json = JSON.parse(response.getContentText());
-    for(const group of json.taxonomies) {
+    for (const group of json.taxonomies) {
       allTerms.push(...group.terms);
     }
 
     // Check if there are more items to get
-    while(json.pagination.continuation_token) {
-      
+    while (json.pagination.continuation_token) {
+
       const token = json.pagination.continuation_token;
       const url = json.pagination.next_page;
       const options = {
@@ -23,11 +23,11 @@ const getAllTaxonomyTerms = () => {
       }
 
       response = execute(url, options);
-      if(response.getResponseCode() === 200) {
+      if (response.getResponseCode() === 200) {
 
         // Add items to list and continue loop
         json = JSON.parse(response.getContentText());
-        for(const group of json.taxonomies) {
+        for (const group of json.taxonomies) {
           allTerms.push(...group.terms);
         }
       }

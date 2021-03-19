@@ -2,13 +2,13 @@ const getAllContentItems = () => {
   const allItems = [];
   const keys = loadKeys();
   let response = executeGetRequest(ITEMS_ENDPOINT);
-  if(response.getResponseCode() === 200) {
+  if (response.getResponseCode() === 200) {
     let json = JSON.parse(response.getContentText());
     allItems.push(...json.items);
 
     // Check if there are more items to get
-    while(json.pagination.continuation_token) {
-      
+    while (json.pagination.continuation_token) {
+
       const token = json.pagination.continuation_token;
       const url = json.pagination.next_page;
       const options = {
@@ -22,7 +22,7 @@ const getAllContentItems = () => {
       }
 
       response = execute(url, options);
-      if(response.getResponseCode() === 200) {
+      if (response.getResponseCode() === 200) {
 
         // Add items to list and continue loop
         json = JSON.parse(response.getContentText());
@@ -53,22 +53,22 @@ const getAllContentItems = () => {
 }
 
 const createNewItem = (name, externalId, codename) => {
-  if(stopProcessing) {
-    return; 
+  if (stopProcessing) {
+    return;
   }
-  
-  const data = {
-      'name': name,
-      'type': {
-        'codename': typeCodename
-      }
-    };
 
-  if(externalId !== '') data.external_id = externalId;
-  if(codename !== '') data.codename = codename;
+  const data = {
+    'name': name,
+    'type': {
+      'codename': typeCodename
+    }
+  };
+
+  if (externalId !== '') data.external_id = externalId;
+  if (codename !== '') data.codename = codename;
 
   const itemResponse = executeRequest(ITEMS_ENDPOINT, 'post', data);
-  if(itemResponse.getResponseCode() === 201) {
+  if (itemResponse.getResponseCode() === 201) {
     // Content item success
     itemCounter++;
 
@@ -85,7 +85,7 @@ const createNewItem = (name, externalId, codename) => {
     // Content item failure
     errorCounter++;
     let responseText = JSON.parse(itemResponse.getContentText());
-    if(responseText.validation_errors) {
+    if (responseText.validation_errors) {
       responseText = responseText.validation_errors[0].message;
     }
     else {
@@ -99,16 +99,16 @@ const createNewItem = (name, externalId, codename) => {
 }
 
 const findById = (externalId) => {
-  const response = executeGetRequest(ITEM_ENDPOINT, {external_id: externalId});
-  if(response.getResponseCode() === 200) {
+  const response = executeGetRequest(ITEM_ENDPOINT, { external_id: externalId });
+  if (response.getResponseCode() === 200) {
     // Success
     return JSON.parse(response.getContentText())
   }
 }
 
 const findByCodename = (codename) => {
-  const response = executeGetRequest(ITEM_BYCODENAME_ENDPOINT, {codename: codename});
-  if(response.getResponseCode() === 200) {
+  const response = executeGetRequest(ITEM_BYCODENAME_ENDPOINT, { codename: codename });
+  if (response.getResponseCode() === 200) {
     // Success
     return JSON.parse(response.getContentText())
   }
@@ -117,7 +117,7 @@ const findByCodename = (codename) => {
 const findByName = (name) => {
   const keys = loadKeys();
   // @ts-ignore
-  const url = `${PREVIEW_ENDPOINT.formatUnicorn({project_id: keys.pid})}/items?system.name=${name}&system.type=${typeCodename}&elements=fakeelementname&depth=0`;
+  const url = `${PREVIEW_ENDPOINT.formatUnicorn({ project_id: keys.pid })}/items?system.name=${name}&system.type=${typeCodename}&elements=fakeelementname&depth=0`;
   const options = {
     'method': 'get',
     'contentType': 'application/json',
@@ -130,9 +130,9 @@ const findByName = (name) => {
 
   apiCounter++;
   const response = execute(url, options);
-  if(response.getResponseCode() === 200) {
+  if (response.getResponseCode() === 200) {
     const json = JSON.parse(response.getContentText());
-    if(json.items.length > 0) return json.items[0];
+    if (json.items.length > 0) return json.items[0];
   }
 }
 
@@ -143,11 +143,11 @@ const upsertItem = (itemId, codename, nameToUpdate, existingName) => {
   const data = {};
   let updatedParts = [];
 
-  if(codename !== '') {
+  if (codename !== '') {
     data.codename = codename;
     updatedParts.push('codename');
   }
-  if(nameToUpdate !== '') {
+  if (nameToUpdate !== '') {
     data.name = nameToUpdate;
     updatedParts.push('name');
   }
@@ -155,8 +155,8 @@ const upsertItem = (itemId, codename, nameToUpdate, existingName) => {
     data.name = existingName;
   }
 
-  const itemResponse = executeRequest(ITEM_ID_ENDPOINT, 'put', data, {id: itemId});
-  if(itemResponse.getResponseCode() === 200) {
+  const itemResponse = executeRequest(ITEM_ID_ENDPOINT, 'put', data, { id: itemId });
+  if (itemResponse.getResponseCode() === 200) {
     upsertResult.results.push(`Updated the ${updatedParts.join('/')} of item ${itemId}`);
     return {
       code: 200,
@@ -179,8 +179,8 @@ const upsertItem = (itemId, codename, nameToUpdate, existingName) => {
  */
 const getExistingItem = (name, externalId, codename) => {
   let item;
-  if(externalId !== '') {
-    if(doPreload) {
+  if (externalId !== '') {
+    if (doPreload) {
       item = contentItemCache.filter(i => i.external_id && i.external_id === externalId && i.type.id === typeID)[0];
       return {
         item: item,
@@ -196,8 +196,8 @@ const getExistingItem = (name, externalId, codename) => {
       };
     }
   }
-  else if(codename !== '') {
-    if(doPreload) {
+  else if (codename !== '') {
+    if (doPreload) {
       item = contentItemCache.filter(i => i.codename === codename && i.type.id === typeID)[0];
       return {
         item: item,
@@ -214,7 +214,7 @@ const getExistingItem = (name, externalId, codename) => {
     }
   }
   else {
-    if(doPreload) {
+    if (doPreload) {
       item = contentItemCache.filter(i => i.name === name && i.type.id === typeID)[0];
       return {
         item: item,

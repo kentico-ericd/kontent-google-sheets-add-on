@@ -1,6 +1,6 @@
 const getWorkflowSteps = () => {
   const response = executeGetRequest(WORKFLOW_ENDPOINT);
-  if(response.getResponseCode() === 200) {
+  if (response.getResponseCode() === 200) {
     // Success
     return {
       'code': 200,
@@ -17,8 +17,8 @@ const getWorkflowSteps = () => {
 }
 
 const moveToDraft = (itemId, lang) => {
-  const response = executeRequest(MOVEWORKFLOW_ENDPOINT, 'put', null, {item_identifier:  itemId, language_codename: lang, workflow_step_identifier: draftWorkflowStepId});
-  if(response.getResponseCode() === 204) {
+  const response = executeRequest(MOVEWORKFLOW_ENDPOINT, 'put', null, { item_identifier: itemId, language_codename: lang, workflow_step_identifier: draftWorkflowStepId });
+  if (response.getResponseCode() === 204) {
     // Success
     return {
       'code': 204

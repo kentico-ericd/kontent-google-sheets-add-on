@@ -287,12 +287,12 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
   for (var i = 0; i < headers.length; i++) {
 
     // Don't process pre-generated headers
-    if(i === nameColumn ||
-    i === codenameColumn ||
-    i === langColumn ||
-    i === currencyFormatColumn ||
-    i === componentColumn ||
-    i === externalIdColumn) continue;
+    if (i === nameColumn ||
+      i === codenameColumn ||
+      i === langColumn ||
+      i === currencyFormatColumn ||
+      i === componentColumn ||
+      i === externalIdColumn) continue;
 
     // Scan elements in type for same code name as header
     for (var k = 0; k < typeElements.length; k++) {
@@ -344,12 +344,12 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
 
             // Load components from the rich_text_components column
             let components = [];
-            if(componentColumn > -1) {
+            if (componentColumn > -1) {
               let componentData = rowValues[componentColumn];
-              if(componentData !== '') {
+              if (componentData !== '') {
                 componentData = JSON.parse(componentData);
-                for(const comp of componentData) {
-                  if(value.includes(`object type="application/kenticocloud" data-type="component" data-id="${comp.id}"`)) {
+                for (const comp of componentData) {
+                  if (value.includes(`object type="application/kenticocloud" data-type="component" data-id="${comp.id}"`)) {
                     // Rich text contains reference to this component, add to array
                     components.push(comp);
                   }
@@ -387,7 +387,7 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
             break;
           case "date_time":
 
-            if(value !== '') value = tryFormatDateTime(typeElements[k].codename, value);
+            if (value !== '') value = tryFormatDateTime(typeElements[k].codename, value);
             break;
         }
 

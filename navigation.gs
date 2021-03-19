@@ -1,85 +1,70 @@
 const CARD_SETTINGS = 'Project settings',
-      CARD_GENERATE = 'Generate sheet',
-      CARD_IMPORT = 'Import',
-      CARD_EXPORT = 'Export',
-      CARD_INSERT = 'Rich text macros',
-      CARD_VALIDATE = 'Validate sheet';
+  CARD_GENERATE = 'Generate sheet',
+  CARD_IMPORT = 'Import',
+  CARD_EXPORT = 'Export',
+  CARD_INSERT = 'Rich text macros',
+  CARD_VALIDATE = 'Validate sheet';
 const KEY_DOUPDATE = 'doupdate_key',
-      KEY_DOPRELOAD = 'dopreload_key',
-      KEY_TRANSLATEIDS = 'dotranslate_key',
-      KEY_INLINEITEM_IDENTIFIERTYPE = 'inlineitem_identifiertype_key',
-      KEY_INLINEITEM_IDENTIFIER = 'inlineitem_identifier_key',
-      KEY_ITEMLINK_IDENTIFIER = 'itemlink_identifier_key',
-      KEY_ITEMLINK_IDENTIFIERTYPE = 'itemlink_identifiertype_key',
-      KEY_ITEMLINK_TEXT = 'itemlink_text_key',
-      KEY_ASSETLINK_IDENTIFIER = 'assetlink_identifier_key',
-      KEY_ASSETLINK_IDENTIFIERTYPE = 'assetlink_identifiertype_key',
-      KEY_ASSETLINK_TEXT = 'assetlink_text_key';
+  KEY_DOPRELOAD = 'dopreload_key',
+  KEY_TRANSLATEIDS = 'dotranslate_key',
+  KEY_INLINEITEM_IDENTIFIERTYPE = 'inlineitem_identifiertype_key',
+  KEY_INLINEITEM_IDENTIFIER = 'inlineitem_identifier_key',
+  KEY_ITEMLINK_IDENTIFIER = 'itemlink_identifier_key',
+  KEY_ITEMLINK_IDENTIFIERTYPE = 'itemlink_identifiertype_key',
+  KEY_ITEMLINK_TEXT = 'itemlink_text_key',
+  KEY_ASSETLINK_IDENTIFIER = 'assetlink_identifier_key',
+  KEY_ASSETLINK_IDENTIFIERTYPE = 'assetlink_identifiertype_key',
+  KEY_ASSETLINK_TEXT = 'assetlink_text_key';
 const VALUE_IDENTIFIERTYPE_ID = 'id',
-      VALUE_IDENTIFIERTYPE_EXTERNAL = 'external_id';
-const MESSAGE_KEY_FORMAT = `USERSEEN_{id}`,
-      MESSAGES = [
-  { id: 'UPDATE_EXPORT_BETA', title: 'New update!', text: 'The new Export feature has just been added, which allows you to export content items from Kontent into Sheets. Please see https://github.com/Kentico/kontent-google-sheets-add-on#exporting-items-from-kontent for more information.\n\nAs the feature has just released, it should be considered in beta. Please do not use the feature in production environments without testing first!' }
-];
-
-const checkMessages = () => {
-  const cache = CacheService.getUserCache();
-  for(const msg of MESSAGES) {
-    const key = MESSAGE_KEY_FORMAT.formatUnicorn({id: msg.id});
-    if(!cache.get(key)) {
-      showAlert(msg.text, msg.title);
-      cache.put(key, 'true');
-    }
-  }
-}
+  VALUE_IDENTIFIERTYPE_EXTERNAL = 'external_id';
 
 const showHomeCard = () => {
   checkMessages();
 
   // Nav buttons
   const settingsButton = CardService.newTextButton()
-      .setText(CARD_SETTINGS)
-      .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
-      .setOnClickAction(CardService.newAction()
-        .setFunctionName('navigateTo')
-        .setParameters({ 'card': CARD_SETTINGS }));
+    .setText(CARD_SETTINGS)
+    .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('navigateTo')
+      .setParameters({ 'card': CARD_SETTINGS }));
   const generateButton = CardService.newTextButton()
-      .setText(CARD_GENERATE)
-      .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
-      .setOnClickAction(CardService.newAction()
-        .setFunctionName('navigateTo')
-        .setParameters({ 'card': CARD_GENERATE }));
+    .setText(CARD_GENERATE)
+    .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('navigateTo')
+      .setParameters({ 'card': CARD_GENERATE }));
   const importButton = CardService.newTextButton()
-      .setText(CARD_IMPORT)
-      .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
-      .setOnClickAction(CardService.newAction()
-        .setFunctionName('navigateTo')
-        .setParameters({ 'card': CARD_IMPORT }));
+    .setText(CARD_IMPORT)
+    .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('navigateTo')
+      .setParameters({ 'card': CARD_IMPORT }));
   const insertButton = CardService.newTextButton()
-      .setText(CARD_INSERT)
-      .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
-      .setOnClickAction(CardService.newAction()
-        .setFunctionName('navigateTo')
-        .setParameters({ 'card': CARD_INSERT }));
+    .setText(CARD_INSERT)
+    .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('navigateTo')
+      .setParameters({ 'card': CARD_INSERT }));
   const validateButton = CardService.newTextButton()
-      .setText(CARD_VALIDATE)
-      .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
-      .setOnClickAction(CardService.newAction()
-        .setFunctionName('navigateTo')
-        .setParameters({ 'card': CARD_VALIDATE }));
+    .setText(CARD_VALIDATE)
+    .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('navigateTo')
+      .setParameters({ 'card': CARD_VALIDATE }));
   const exportButton = CardService.newTextButton()
-      .setText(CARD_EXPORT)
-      .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
-      .setOnClickAction(CardService.newAction()
-        .setFunctionName('navigateTo')
-        .setParameters({ 'card': CARD_EXPORT }));
+    .setText(CARD_EXPORT)
+    .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
+    .setOnClickAction(CardService.newAction()
+      .setFunctionName('navigateTo')
+      .setParameters({ 'card': CARD_EXPORT }));
 
   // Get connected project
   const keys = loadKeys();
   let projectInfo;
-  if(keys.pid) {
+  if (keys.pid) {
     let response = getProjectInfo(keys.pid);
-    if(response.code === 200) {
+    if (response.code === 200) {
       projectInfo = CardService.newDecoratedText()
         .setTopLabel('Connected to project')
         .setText(`<b>${response.data.name}</b>`)
@@ -94,7 +79,7 @@ const showHomeCard = () => {
     projectInfo = CardService.newTextParagraph()
       .setText('You are not connected to a project. Please visit the <b>Project settings</b> menu to set your API keys. If you recently updated your keys, please refresh the addon from the sidebar header.');
   }
-  
+
   // Help button
   const fixedFooter = CardService.newFixedFooter()
     .setPrimaryButton(CardService.newTextButton()
@@ -123,7 +108,7 @@ const showHomeCard = () => {
       .addWidget(CardService.newTextParagraph().setText('Set your project API keys')))
     .setFixedFooter(fixedFooter)
     .build();
-    
+
   return [homeCard];
 }
 
@@ -166,8 +151,8 @@ const showImportComplete = (logName) => {
 
 const navigateTo = (e = undefined) => {
   let nav;
-  const cardName = e ?  e.parameters.card : '';
-  switch(cardName) {
+  const cardName = e ? e.parameters.card : '';
+  switch (cardName) {
     case CARD_GENERATE:
       nav = CardService.newNavigation().pushCard(makeGenerateCard());
       break;
@@ -285,14 +270,14 @@ const makeGenerateCard = () => {
   const section = CardService.newCardSection();
   const response = loadTypes();
 
-  if(response.code === 200) {
+  if (response.code === 200) {
     const types = response.data;
     types.forEach(type => {
       section.addWidget(
         CardService.newTextButton().setText(type.name)
-        .setOnClickAction(CardService.newAction()
-          .setFunctionName('makeSheetForType')
-          .setParameters({ 'json': JSON.stringify(type) })));
+          .setOnClickAction(CardService.newAction()
+            .setFunctionName('makeSheetForType')
+            .setParameters({ 'json': JSON.stringify(type) })));
     });
   }
   else {
@@ -301,10 +286,10 @@ const makeGenerateCard = () => {
 
   const fixedFooter = CardService.newFixedFooter()
     .setPrimaryButton(CardService.newTextButton()
-            .setText("Help")
-            .setOnClickAction(CardService.newAction()
-              .setFunctionName('openUrl')
-              .setParameters({ 'url': 'https://github.com/Kentico/kontent-google-sheets-add-on#preparing-the-sheet' })));
+      .setText("Help")
+      .setOnClickAction(CardService.newAction()
+        .setFunctionName('openUrl')
+        .setParameters({ 'url': 'https://github.com/Kentico/kontent-google-sheets-add-on#preparing-the-sheet' })));
 
   return CardService.newCardBuilder()
     .setName(CARD_GENERATE)
@@ -319,7 +304,7 @@ const openUrl = (e) => {
   const url = e.parameters.url;
   return CardService.newActionResponseBuilder()
     .setOpenLink(CardService.newOpenLink().setUrl(url).setOpenAs(CardService.OpenAs.OVERLAY))
-    .build(); 
+    .build();
 }
 
 const showAlert = (message, title = 'Message') => {
@@ -417,11 +402,11 @@ const makeSettingsCard = () => {
 
   const fixedFooter = CardService.newFixedFooter()
     .setSecondaryButton(CardService.newTextButton()
-            .setText("Clear")
-            .setOnClickAction(CardService.newAction().setFunctionName('clearSettings')))
+      .setText("Clear")
+      .setOnClickAction(CardService.newAction().setFunctionName('clearSettings')))
     .setPrimaryButton(CardService.newTextButton()
-            .setText("Save")
-            .setOnClickAction(CardService.newAction().setFunctionName('saveSettings')));
+      .setText("Save")
+      .setOnClickAction(CardService.newAction().setFunctionName('saveSettings')));
 
   const section = CardService.newCardSection()
     .addWidget(CardService.newTextInput()
@@ -450,7 +435,7 @@ const clearSettings = (e) => {
   return CardService.newActionResponseBuilder()
     .setStateChanged(true)
     .setNavigation(CardService.newNavigation().popCard())
-    .build(); 
+    .build();
 }
 
 const saveSettings = (e) => {
