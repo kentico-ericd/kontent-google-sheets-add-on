@@ -228,7 +228,7 @@ const upsertRowData = (rowValues) => {
       // Response from CM endpoint stores ID in 'id' but Delivery stores it in 'system.id'
       const itemId = (existingItem.id === undefined) ? existingItem.system.id : existingItem.id;
 
-      upsertResult.results.push(`Found existing item with ID ${itemId}`);
+      upsertResult.results.push(`Found existing item with ID ${itemId} by ${itemResponse.foundBy}`);
       updateExistingItem(existingItem, externalId, rowValues, false, lang, codename, name, itemResponse.foundBy);
     }
   }
@@ -412,19 +412,14 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
 
     const existingCodename = (existingItem.codename) ? existingItem.codename : existingItem.system.codename;
     const existingName = (existingItem.name) ? existingItem.name : existingItem.system.name;
-    if (foundBy === 'name') {
-
-      // We can update the codename
-      if (itemCodename !== existingCodename) {
-        upsertItem(itemId, itemCodename, '', existingName);
-      }
+    if (foundBy === 'name' && itemCodename !== '' && itemCodename !== existingCodename) {
+      
+      upsertItem(itemId, itemCodename, '', existingName);
     }
-    else if (foundBy === 'codename') {
+    else if (foundBy === 'codename' && name !== existingName) {
 
       // We can update the name only
-      if (name !== existingName) {
-        upsertItem(itemId, '', name, existingName);
-      }
+      upsertItem(itemId, '', name, existingName);
     }
     else if (foundBy === 'external_id') {
 
