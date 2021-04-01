@@ -19,8 +19,6 @@ const VALUE_IDENTIFIERTYPE_ID = 'id',
   VALUE_IDENTIFIERTYPE_EXTERNAL = 'external_id';
 
 const showHomeCard = () => {
-  checkMessages();
-
   // Nav buttons
   const settingsButton = CardService.newTextButton()
     .setText(CARD_SETTINGS)
