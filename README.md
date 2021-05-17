@@ -2,17 +2,6 @@
 
 # ![Sheets](https://www.google.com/images/about/sheets-icon.svg) Google Sheets Import
 
-- [Installation](#installation)
-- [Preparing the Sheet](#preparing-the-sheet)
-  - [Setting the headers](#setting-the-headers)
-- [Formatting cell values](#formatting-cell-values)
-  - [Setting Rich Text values](#setting-rich-text-values)
-  - [Components in Rich Text](#components-in-rich-text)
-- [Importing the content](#importing-the-content)
-  - [Locating and updating existing items](#locating-and-updating-existing-items)
-  - [Batching](#batching)
-- [Exporting items from Kontent](#exporting-items-from-kontent)
-
 # Installation
 You can install this Google Workspace add-on [here](https://workspace.google.com/marketplace/app/kentico_kontent/482429381322) or directly from Google Sheets using this button in the sidebar:
 
@@ -168,7 +157,11 @@ There is an optional __Translate IDs__ setting you can enable before exporting. 
 This is helpful if you are considering exporting items from Project A and into Project B. Both projects may have a taxonomy term called "Events," but the `id` of the term will be different. If the codename is "events" in both projects, the content items which reference that taxonomy term can be imported without any issues.
 
 # Contributing
-To develop and test this Google Script project, first install [this Chrome extension](https://chrome.google.com/webstore/detail/google-apps-script-github/lfjcgcmkmjjlieihflfhjopckgpelofo?hl=en) which integrates Google Scripts with Git. Then fork this repository and create a new Google Script project on https://script.google.com/.
-
-Use the new menus added by the extension (Repository, Branch, ..) to pull the code from your forked repository into the Script project. After you've made the desired code changes, test the add-on in a Google Sheet using the Deploy > Test deployments_ menu.
+1. Clone this repo and run `npm i`
+1. Create a Google App Script project
+1. Run `clasp login` to connect the repo to your Google account
+1. Make changes
+1. Run `npm run deploy` to push changes to your App Script project
+1. Test your changes with a [Test Deployment](https://developers.google.com/apps-script/concepts/deployments) in Google Sheets
+1. Create a pull request to merge your changes
 
