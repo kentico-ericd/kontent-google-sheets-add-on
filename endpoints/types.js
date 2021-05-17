@@ -3,23 +3,25 @@ const getType = (codename) => {
   if (response.getResponseCode() === 200) {
     // Success
     return {
-      'code': 200,
-      'data': JSON.parse(response.getContentText())
+      code: 200,
+      data: JSON.parse(response.getContentText()),
     };
   }
   // Failure
   return {
-    'code': response.getResponseCode(),
-    'data': JSON.parse(response.getContentText()).message
+    code: response.getResponseCode(),
+    data: JSON.parse(response.getContentText()).message,
   };
-}
-
+};
 
 const loadTypes = () => {
   const response = executeGetRequest(TYPES_ENDPOINT);
   if (response.getResponseCode() === 200) {
     // Success
-    const types = JSON.parse(response.getContentText()).types.sort(function (a, b) {
+    const types = JSON.parse(response.getContentText()).types.sort(function (
+      a,
+      b
+    ) {
       var val1 = a.name.toUpperCase();
       var val2 = b.name.toUpperCase();
       if (val1 < val2) {
@@ -32,59 +34,63 @@ const loadTypes = () => {
       return 0;
     });
     return {
-      'code': 200,
-      'data': types
+      code: 200,
+      data: types,
     };
   }
   // Failure
   return {
-    'code': response.getResponseCode(),
-    'data': JSON.parse(response.getContentText()).message
+    code: response.getResponseCode(),
+    data: JSON.parse(response.getContentText()).message,
   };
-}
+};
 
 const getSnippetElements = (id) => {
-  const response = executeGetRequest(SNIPPET_ENDPOINT, { snippet_identifier: id });
+  const response = executeGetRequest(SNIPPET_ENDPOINT, {
+    snippet_identifier: id,
+  });
   if (response.getResponseCode() === 200) {
     // Success
     return {
-      'code': 200,
-      'data': JSON.parse(response.getContentText()).elements
-    }
-  }
-  else {
+      code: 200,
+      data: JSON.parse(response.getContentText()).elements,
+    };
+  } else {
     // Failure
     return {
-      'code': response.getResponseCode(),
-      'data': JSON.parse(response.getContentText()).message
-    }
+      code: response.getResponseCode(),
+      data: JSON.parse(response.getContentText()).message,
+    };
   }
-}
+};
 
 /**
-* Gets type elements and expands on snippet elements to include in the resulting array
-**/
+ * Gets type elements and expands on snippet elements to include in the resulting array
+ **/
 const getTypeElements = (type) => {
   const elements = [];
-  type.elements.forEach(e => {
+  type.elements.forEach((e) => {
     switch (e.type) {
       case "snippet":
         const response = getSnippetElements(e.snippet.id);
         if (response.code === 200) {
           let snippetElements = response.data;
           // Remove guidelines
-          snippetElements = snippetElements.filter(s => s.type !== "guidelines");
+          snippetElements = snippetElements.filter(
+            (s) => s.type !== "guidelines"
+          );
           Array.prototype.push.apply(elements, snippetElements);
         }
         break;
-      case "guidelines": break; // Don't add guidelines
+      case "guidelines":
+        break; // Don't add guidelines
       default:
         elements.push(e);
         break;
     }
   });
   return elements;
-}
+};
 
 /**
  * Called from Generate and Export menu, creates a Sheet with the content type code name
@@ -96,7 +102,7 @@ const makeSheetForType = (e) => {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(contentType.codename);
   if (sheet != null) {
-    showAlert('A sheet already exists with this content type code name.');
+    showAlert("A sheet already exists with this content type code name.");
     return;
   }
 
@@ -104,14 +110,20 @@ const makeSheetForType = (e) => {
   const elements = getTypeElements(contentType);
 
   // Generate headers
-  const headers = ['name', 'external_id', 'codename', 'language', 'currency_format'];
+  const headers = [
+    "name",
+    "external_id",
+    "codename",
+    "language",
+    "currency_format",
+  ];
   for (var i = 0; i < elements.length; i++) {
     headers.push(elements[i].codename);
   }
 
   // Add component header to end
-  headers.push('rich_text_components');
+  headers.push("rich_text_components");
 
   const range = newSheet.getRange(1, 1, 1, headers.length);
   range.setValues([headers]);
-}
+};

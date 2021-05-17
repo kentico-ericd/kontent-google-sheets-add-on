@@ -3,4 +3,4 @@
  */
 const validateSheet = (e) => {
   const sheetName = SpreadsheetApp.getActiveSpreadsheet().getSheetName();
-}
+};

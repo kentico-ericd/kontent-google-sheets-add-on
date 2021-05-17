@@ -8,22 +8,22 @@ const getHeaders = () => {
   for (var i = 0; i < values[0].length; i++) {
     const value = values[0][i].toString().toLowerCase();
     switch (value) {
-      case 'language':
-        langColumn = i
+      case "language":
+        langColumn = i;
         break;
-      case 'name':
-        nameColumn = i
+      case "name":
+        nameColumn = i;
         break;
-      case 'external_id':
-        externalIdColumn = i
+      case "external_id":
+        externalIdColumn = i;
         break;
-      case 'currency_format':
+      case "currency_format":
         currencyFormatColumn = i;
         break;
-      case 'codename':
+      case "codename":
         codenameColumn = i;
         break;
-      case 'rich_text_components':
+      case "rich_text_components":
         componentColumn = i;
         break;
     }
@@ -35,7 +35,7 @@ const getHeaders = () => {
     showAlert('Your sheet needs to contain a "name" header');
     return;
   }
-}
+};
 
 /**
  * Gets all sheet rows and the content type code name from the active sheet
@@ -47,10 +47,10 @@ const loadSheetValues = () => {
   typeCodename = sheet.getName().toLowerCase();
 
   if (values[0].length < 1) {
-    showAlert('Your sheet doesn\'t contain enough data to import!');
+    showAlert("Your sheet doesn't contain enough data to import!");
     return;
   }
-}
+};
 
 /**
  * If doPreload is enabled, content items are requested from the project and saved in process
@@ -61,14 +61,15 @@ const checkPreload = () => {
     const itemsResponse = getAllContentItems();
     if (itemsResponse.code === 200) {
       contentItemCache = itemsResponse.data;
-    }
-    else {
+    } else {
       // Couldn't load items for some reason.. disable preload
-      showAlert(`Couldn't load content items for cache: ${itemsResponse.data}... continuing without cache`);
+      showAlert(
+        `Couldn't load content items for cache: ${itemsResponse.data}... continuing without cache`
+      );
       doPreload = false;
     }
   }
-}
+};
 
 /**
  * Load sheet data and project info. Should only be called from UI Import menu, not from batching
@@ -88,16 +89,14 @@ const initVars = () => {
     // Get ID of Published/Draft workflow step for later use
     const stepResponse = getWorkflowSteps();
     if (stepResponse.code === 200) {
-      stepResponse.data.forEach(step => {
-        if (step.name === 'Published') {
+      stepResponse.data.forEach((step) => {
+        if (step.name === "Published") {
           publishedWorkflowStepId = step.id;
-        }
-        else if (step.name === 'Draft') {
+        } else if (step.name === "Draft") {
           draftWorkflowStepId = step.id;
         }
       });
-    }
-    else {
+    } else {
       showAlert(`Failed to load workflow steps: ${stepResponse.data}`);
       return;
     }
@@ -108,13 +107,14 @@ const initVars = () => {
   if (typeResponse.code === 200) {
     typeID = typeResponse.data.id;
     typeElements = getTypeElements(typeResponse.data);
-  }
-  else {
+  } else {
     // Content type failure
-    showAlert(`Error getting elements for type ${typeCodename}: ${typeResponse.data}`);
+    showAlert(
+      `Error getting elements for type ${typeCodename}: ${typeResponse.data}`
+    );
     return;
   }
-}
+};
 
 /**
  * Called from Import menu, get import options and begin importing first chunk
@@ -131,7 +131,7 @@ const doImport = (e) => {
   initVars();
 
   return upsertChunk(e);
-}
+};
 
 const upsertChunk = (e) => {
   startTime = new Date();
@@ -145,11 +145,16 @@ const upsertChunk = (e) => {
   }
 
   while (importingRowNum < values.length) {
-
     stopProcessing = false;
     // Init json result object for this row
     // Increase importingRowNum by 1 because values[] is 0-based but Sheet row numbers start at 1
-    upsertResult = { "row": importingRowNum + 1, "name": "", updatedExisting: false, "errors": [], "results": [] };
+    upsertResult = {
+      row: importingRowNum + 1,
+      name: "",
+      updatedExisting: false,
+      errors: [],
+      results: [],
+    };
 
     upsertRowData(values[importingRowNum]);
 
@@ -168,17 +173,19 @@ const upsertChunk = (e) => {
   }
 
   return updatePartialLog(e, true);
-}
+};
 
 const upsertRowData = (rowValues) => {
-  const name = (nameColumn === -1) ? '' : rowValues[nameColumn].toString();
-  const externalId = (externalIdColumn === -1) ? '' : rowValues[externalIdColumn].toString();
-  const codename = (codenameColumn === -1) ? '' : rowValues[codenameColumn].toString();
-  let lang = (langColumn === -1) ? defaultLang : rowValues[langColumn];
-  if (lang === '' || lang === undefined) lang = defaultLang;
+  const name = nameColumn === -1 ? "" : rowValues[nameColumn].toString();
+  const externalId =
+    externalIdColumn === -1 ? "" : rowValues[externalIdColumn].toString();
+  const codename =
+    codenameColumn === -1 ? "" : rowValues[codenameColumn].toString();
+  let lang = langColumn === -1 ? defaultLang : rowValues[langColumn];
+  if (lang === "" || lang === undefined) lang = defaultLang;
 
   // Make sure we have some way to identify the item
-  if (name === '' && externalId === '') {
+  if (name === "" && externalId === "") {
     errorCounter++;
     stopProcessing = true;
     upsertResult.errors.push(`Row doesn't contain a name or external_id`);
@@ -193,16 +200,24 @@ const upsertRowData = (rowValues) => {
       const newItem = itemResponse.data;
       upsertResult.results.push(`Created new item with ID ${newItem.id}`);
 
-      updateExistingItem(newItem, externalId, rowValues, true, lang, codename, name);
-    }
-    else {
+      updateExistingItem(
+        newItem,
+        externalId,
+        rowValues,
+        true,
+        lang,
+        codename,
+        name
+      );
+    } else {
       // Item failure
-      upsertResult.errors.push(`Error creating content item: ${itemResponse.data}`);
+      upsertResult.errors.push(
+        `Error creating content item: ${itemResponse.data}`
+      );
       stopProcessing = true;
       return;
     }
-  }
-  else {
+  } else {
     const itemResponse = getExistingItem(name, externalId, codename);
     let existingItem = itemResponse.item;
     if (existingItem === undefined) {
@@ -211,36 +226,70 @@ const upsertRowData = (rowValues) => {
       if (itemResponse.code === 201) {
         // Item success
         existingItem = itemResponse.data;
-        upsertResult.results.push(`Created new item with ID ${existingItem.id}`);
-        updateExistingItem(existingItem, externalId, rowValues, true, lang, codename, name);
-      }
-      else {
+        upsertResult.results.push(
+          `Created new item with ID ${existingItem.id}`
+        );
+        updateExistingItem(
+          existingItem,
+          externalId,
+          rowValues,
+          true,
+          lang,
+          codename,
+          name
+        );
+      } else {
         // Item failure
-        upsertResult.errors.push(`Error creating content item: ${itemResponse.data}`);
+        upsertResult.errors.push(
+          `Error creating content item: ${itemResponse.data}`
+        );
         stopProcessing = true;
         return;
       }
-    }
-    else {
+    } else {
       // Content item found
       upsertResult.updatedExisting = true;
 
       // Response from CM endpoint stores ID in 'id' but Delivery stores it in 'system.id'
-      const itemId = (existingItem.id === undefined) ? existingItem.system.id : existingItem.id;
+      const itemId =
+        existingItem.id === undefined
+          ? existingItem.system.id
+          : existingItem.id;
 
-      upsertResult.results.push(`Found existing item with ID ${itemId} by ${itemResponse.foundBy}`);
-      updateExistingItem(existingItem, externalId, rowValues, false, lang, codename, name, itemResponse.foundBy);
+      upsertResult.results.push(
+        `Found existing item with ID ${itemId} by ${itemResponse.foundBy}`
+      );
+      updateExistingItem(
+        existingItem,
+        externalId,
+        rowValues,
+        false,
+        lang,
+        codename,
+        name,
+        itemResponse.foundBy
+      );
     }
   }
-}
+};
 
-const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, itemCodename, name, foundBy = '') => {
+const updateExistingItem = (
+  existingItem,
+  externalId,
+  rowValues,
+  isNew,
+  lang,
+  itemCodename,
+  name,
+  foundBy = ""
+) => {
   if (stopProcessing) {
     return;
   }
 
   // Response from CM endpoint stores ID in 'id' but Delivery stores it in 'system.id'
-  const itemId = (existingItem.id === undefined) ? existingItem.system.id : existingItem.id;
+  const itemId =
+    existingItem.id === undefined ? existingItem.system.id : existingItem.id;
 
   if (!isNew) {
     // Check workflow, create new version or move to Draft
@@ -249,50 +298,54 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
       // Variant Success - check workflow step
       const workflowStep = variantResponse.data.workflow_step.id;
       if (workflowStep === publishedWorkflowStepId) {
-        // Create new version 
+        // Create new version
         const versionResponse = createNewVersion(itemId, lang);
         if (versionResponse.code === 204) {
           // Version success - script continues to upsert variant
-          upsertResult.results.push(`Created new version of "${lang}" language variant`);
-        }
-        else {
+          upsertResult.results.push(
+            `Created new version of "${lang}" language variant`
+          );
+        } else {
           // Version failure
           errorCounter++;
           stopProcessing = true;
-          upsertResult.errors.push(`Error creating new version: ${versionResponse.data}`);
+          upsertResult.errors.push(
+            `Error creating new version: ${versionResponse.data}`
+          );
           return;
         }
-      }
-      else if (workflowStep !== draftWorkflowStepId) {
+      } else if (workflowStep !== draftWorkflowStepId) {
         // Move to draft
         const workflowResponse = moveToDraft(itemId, lang);
         if (workflowResponse.code === 204) {
           // Workflow success - script continues to upsert variant
           upsertResult.results.push(`Moved language variant to Draft step`);
-        }
-        else {
+        } else {
           // Workflow failure
           errorCounter++;
           stopProcessing = true;
-          upsertResult.errors.push(`Error moving to Draft step: ${workflowResponse.data}`);
+          upsertResult.errors.push(
+            `Error moving to Draft step: ${workflowResponse.data}`
+          );
           return;
         }
       }
-
     }
   }
 
   // Create JS object with only row data for headers that match type elements
   const elements = [];
   for (var i = 0; i < headers.length; i++) {
-
     // Don't process pre-generated headers
-    if (i === nameColumn ||
+    if (
+      i === nameColumn ||
       i === codenameColumn ||
       i === langColumn ||
       i === currencyFormatColumn ||
       i === componentColumn ||
-      i === externalIdColumn) continue;
+      i === externalIdColumn
+    )
+      continue;
 
     // Scan elements in type for same code name as header
     for (var k = 0; k < typeElements.length; k++) {
@@ -303,22 +356,19 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
         // Element-specific fixes to ensure data is in correct format for upsert
         switch (typeElements[k].type) {
           case "url_slug":
-
             if (value.length > 0) {
-
-              var mode = 'custom';
-              if (value === '#autogenerate#') {
-
+              var mode = "custom";
+              if (value === "#autogenerate#") {
                 // Revert to autogeneration
-                mode = 'autogenerated';
+                mode = "autogenerated";
               }
 
               elements.push({
-                'element': {
-                  'codename': typeElements[k].codename
+                element: {
+                  codename: typeElements[k].codename,
                 },
-                'value': value,
-                'mode': mode
+                value: value,
+                mode: mode,
               });
             }
 
@@ -326,19 +376,19 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
             // (or, there was no value and it was skipped) so continue the foreach loop
             continue;
           case "text":
-
             // Cell could contain only numbers, convert to string first
             value = value.toString();
             break;
           case "number":
-
             // Get currency_format column value
-            const currencyFormat = (currencyFormatColumn === -1) ? 'US' : rowValues[currencyFormatColumn];
+            const currencyFormat =
+              currencyFormatColumn === -1
+                ? "US"
+                : rowValues[currencyFormatColumn];
             // Convert number string like '1,000.50' or '1 000,50' to float
             value = tryParseNumber(value, currencyFormat);
             break;
           case "rich_text":
-
             // Parse special ## macros
             value = parseRichText(value);
 
@@ -346,10 +396,14 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
             let components = [];
             if (componentColumn > -1) {
               let componentData = rowValues[componentColumn];
-              if (componentData !== '') {
+              if (componentData !== "") {
                 componentData = JSON.parse(componentData);
                 for (const comp of componentData) {
-                  if (value.includes(`object type="application/kenticocloud" data-type="component" data-id="${comp.id}"`)) {
+                  if (
+                    value.includes(
+                      `object type="application/kenticocloud" data-type="component" data-id="${comp.id}"`
+                    )
+                  ) {
                     // Rich text contains reference to this component, add to array
                     components.push(comp);
                   }
@@ -358,11 +412,11 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
             }
 
             elements.push({
-              'element': {
-                'codename': typeElements[k].codename
+              element: {
+                codename: typeElements[k].codename,
               },
-              'value': value,
-              'components': components
+              value: value,
+              components: components,
             });
 
             // We manually added this element+value instead of after the switch
@@ -372,7 +426,6 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
           case "modular_content":
           case "multiple_choice":
           case "taxonomy":
-
             // Value should be in format "<identifier type>:<identifier>,<identifier type>:<identifier>"
             // Split into expected format value:[{ <identifier type>: <identifier> }, { <identifier type>: <identifier> }]
             let ar = value.split(",");
@@ -386,8 +439,8 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
             }
             break;
           case "date_time":
-
-            if (value !== '') value = tryFormatDateTime(typeElements[k].codename, value);
+            if (value !== "")
+              value = tryFormatDateTime(typeElements[k].codename, value);
             break;
         }
 
@@ -395,10 +448,10 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
         if (value.length === 0) continue;
 
         elements.push({
-          'element': {
-            'codename': typeElements[k].codename
+          element: {
+            codename: typeElements[k].codename,
           },
-          'value': value
+          value: value,
         });
         break;
       }
@@ -409,28 +462,30 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
 
   // Check if we should update name or codename. If item is new, those values are already up-to-date
   if (!isNew) {
-
-    const existingCodename = (existingItem.codename) ? existingItem.codename : existingItem.system.codename;
-    const existingName = (existingItem.name) ? existingItem.name : existingItem.system.name;
-    if (foundBy === 'name' && itemCodename !== '' && itemCodename !== existingCodename) {
-      
-      upsertItem(itemId, itemCodename, '', existingName);
-    }
-    else if (foundBy === 'codename' && name !== existingName) {
-
+    const existingCodename = existingItem.codename
+      ? existingItem.codename
+      : existingItem.system.codename;
+    const existingName = existingItem.name
+      ? existingItem.name
+      : existingItem.system.name;
+    if (
+      foundBy === "name" &&
+      itemCodename !== "" &&
+      itemCodename !== existingCodename
+    ) {
+      upsertItem(itemId, itemCodename, "", existingName);
+    } else if (foundBy === "codename" && name !== existingName) {
       // We can update the name only
-      upsertItem(itemId, '', name, existingName);
-    }
-    else if (foundBy === 'external_id') {
-
+      upsertItem(itemId, "", name, existingName);
+    } else if (foundBy === "external_id") {
       // We can update both codename and name, check if either of them are different from existing item found
       let nameToUpdate = name;
-      if (nameToUpdate === existingName) nameToUpdate = '';
+      if (nameToUpdate === existingName) nameToUpdate = "";
 
       let codenameToUpdate = itemCodename;
-      if (codenameToUpdate === existingCodename) codenameToUpdate = '';
+      if (codenameToUpdate === existingCodename) codenameToUpdate = "";
 
-      if (nameToUpdate !== '' || codenameToUpdate !== '') {
+      if (nameToUpdate !== "" || codenameToUpdate !== "") {
         upsertItem(itemId, codenameToUpdate, nameToUpdate, existingName);
       }
     }
@@ -441,20 +496,20 @@ const updateExistingItem = (existingItem, externalId, rowValues, isNew, lang, it
     // Variant success
     variantCounter++;
     upsertResult.results.push(`Updated "${lang}" language variant`);
-  }
-  else {
+  } else {
     // Variant failure
     errorCounter++;
     stopProcessing = true;
     if (variantResponse.data.validation_errors) {
       responseText = variantResponse.data.validation_errors[0].message;
-    }
-    else {
+    } else {
       responseText = variantResponse.data.message;
     }
-    upsertResult.errors.push(`Error upserting language variant: ${responseText}`);
+    upsertResult.errors.push(
+      `Error upserting language variant: ${responseText}`
+    );
   }
-}
+};
 
 /**
  * Creates the result Sheet if it doesn't exist. Appends results from the current chunk
@@ -465,14 +520,15 @@ const updatePartialLog = (e, importComplete) => {
   let nextEmptyRow = -1;
   const numColumns = 5; // Increase if more headers are added
 
-  if (resultSheetName === '') {
+  if (resultSheetName === "") {
     // Result sheet doesn't exist yet
     resultSheetName = `Import log: ${new Date().toUTCString()}`;
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     sheet = ss.insertSheet(resultSheetName);
 
     // Go back to import Sheet
-    const importedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(typeCodename);
+    const importedSheet =
+      SpreadsheetApp.getActiveSpreadsheet().getSheetByName(typeCodename);
     SpreadsheetApp.setActiveSheet(importedSheet);
 
     // Formatting
@@ -480,26 +536,27 @@ const updatePartialLog = (e, importComplete) => {
     sheet.setColumnWidth(5, 200);
 
     // Add headers
-    values.push(['Row', 'Name', 'Created new item', 'Errors', 'Successes']);
-  }
-  else {
+    values.push(["Row", "Name", "Created new item", "Errors", "Successes"]);
+  } else {
     //Get existing result sheet
-    sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(resultSheetName);
+    sheet =
+      SpreadsheetApp.getActiveSpreadsheet().getSheetByName(resultSheetName);
   }
 
   if (!sheet) {
-    showAlert('Result Sheet missing or cannot be created- did you delete it? Continuing import without log...');
+    showAlert(
+      "Result Sheet missing or cannot be created- did you delete it? Continuing import without log..."
+    );
     return;
-  }
-  else {
+  } else {
     // Find an empty row where we can append new data
     nextEmptyRow = sheet.getLastRow() + 1;
   }
 
   // Loop through individual import records
-  resultJSON.forEach(row => {
-    const errors = row.errors ? row.errors.join(', ') : '';
-    const successes = row.results ? row.results.join(', ') : '';
+  resultJSON.forEach((row) => {
+    const errors = row.errors ? row.errors.join(", ") : "";
+    const successes = row.results ? row.results.join(", ") : "";
     values.push([row.row, row.name, !row.updatedExisting, errors, successes]);
   });
 
@@ -507,16 +564,15 @@ const updatePartialLog = (e, importComplete) => {
   range.setValues(values);
 
   if (importComplete) {
-
     // Add stats (remember to fill empty cols with a value)
     values = [];
-    values.push(['Content type:', typeCodename, '', '', '']);
-    values.push(['Seconds spent throttled:', waitTimes / 1000, '', '', '']);
-    values.push(['Total API Calls:', apiCounter, '', '', '']);
-    values.push(['New content items:', itemCounter, '', '', '']);
-    values.push(['Language variants updated:', variantCounter, '', '', '']);
-    values.push(['Total Errors:', errorCounter, '', '', '']);
-    values.push(['', '', '', '', '']);
+    values.push(["Content type:", typeCodename, "", "", ""]);
+    values.push(["Seconds spent throttled:", waitTimes / 1000, "", "", ""]);
+    values.push(["Total API Calls:", apiCounter, "", "", ""]);
+    values.push(["New content items:", itemCounter, "", "", ""]);
+    values.push(["Language variants updated:", variantCounter, "", "", ""]);
+    values.push(["Total Errors:", errorCounter, "", "", ""]);
+    values.push(["", "", "", "", ""]);
 
     sheet.insertRowsBefore(1, values.length);
     const range = sheet.getRange(1, 1, values.length, numColumns);
@@ -524,4 +580,4 @@ const updatePartialLog = (e, importComplete) => {
 
     return showImportComplete(resultSheetName);
   }
-}
+};

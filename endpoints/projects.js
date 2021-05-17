@@ -3,13 +3,13 @@ const getProjectInfo = (pid) => {
   if (response.getResponseCode() === 200) {
     // Success
     return {
-      'code': 200,
-      'data': JSON.parse(response.getContentText())
+      code: 200,
+      data: JSON.parse(response.getContentText()),
     };
   }
   // Failure
   return {
-    'code': response.getResponseCode(),
-    'data': JSON.parse(response.getContentText()).message
+    code: response.getResponseCode(),
+    data: JSON.parse(response.getContentText()).message,
   };
-}
+};
