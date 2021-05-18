@@ -71,7 +71,7 @@ const getTypeElements = (type) => {
   const elements = [];
   type.elements.forEach((e) => {
     switch (e.type) {
-      case "snippet":
+      case "snippet": {
         const response = getSnippetElements(e.snippet.id);
         if (response.code === 200) {
           let snippetElements = response.data;
@@ -82,6 +82,7 @@ const getTypeElements = (type) => {
           Array.prototype.push.apply(elements, snippetElements);
         }
         break;
+      }
       case "guidelines":
         break; // Don't add guidelines
       default:

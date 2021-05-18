@@ -1,6 +1,6 @@
 const getAllAssets = () => {
   let allAssets = [];
-  const response = executeGetRequest(ASSET_ENDPOINT);
+  let response = executeGetRequest(ASSET_ENDPOINT);
   if (response.getResponseCode() === 200) {
     let json = JSON.parse(response.getContentText());
     allAssets.push(...json.assets);

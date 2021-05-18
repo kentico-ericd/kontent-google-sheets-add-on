@@ -1,6 +1,6 @@
 const getAllTaxonomyTerms = () => {
   let allTerms = [];
-  const response = executeGetRequest(TAXONOMY_ENDPOINT);
+  let response = executeGetRequest(TAXONOMY_ENDPOINT);
   if (response.getResponseCode() === 200) {
     let json = JSON.parse(response.getContentText());
     for (const group of json.taxonomies) {

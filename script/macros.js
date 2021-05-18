@@ -61,7 +61,7 @@ const insertMacro = (e) => {
         identifier: identifier,
       });
       break;
-    case KEY_ITEMLINK_IDENTIFIER:
+    case KEY_ITEMLINK_IDENTIFIER: {
       identifier = formInput[KEY_ITEMLINK_IDENTIFIER].stringInputs.value[0];
       identifierType =
         formInput[KEY_ITEMLINK_IDENTIFIERTYPE].stringInputs.value[0];
@@ -72,7 +72,8 @@ const insertMacro = (e) => {
         text: linkText,
       });
       break;
-    case KEY_ASSETLINK_IDENTIFIER:
+    }
+    case KEY_ASSETLINK_IDENTIFIER: {
       identifier = formInput[KEY_ASSETLINK_IDENTIFIER].stringInputs.value[0];
       identifierType =
         formInput[KEY_ASSETLINK_IDENTIFIERTYPE].stringInputs.value[0];
@@ -83,6 +84,7 @@ const insertMacro = (e) => {
         text: assetText,
       });
       break;
+    }
   }
 
   if (output) {

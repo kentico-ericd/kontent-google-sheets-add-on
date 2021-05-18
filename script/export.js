@@ -120,7 +120,7 @@ const parseElementValue = (
     case "asset":
     case "modular_content":
     case "multiple_choice":
-    case "taxonomy":
+    case "taxonomy": {
       let retVal = "";
       for (const row of value) {
         if (doTranslateIDs) {
@@ -140,7 +140,7 @@ const parseElementValue = (
       }
       // Trim trailing comma
       return retVal.slice(0, retVal.length - 1);
-
+    }
     case "rich_text":
       if (variantElement.components && variantElement.components.length > 0) {
         // Add components to array of all components for this variant
@@ -231,7 +231,8 @@ const getReferenceForObject = (
       match = assetCache.filter((asset) => asset.id === refID);
       if (match.length > 0) {
         newRef = match[0][desiredRefType];
-      } else break;
+      }
+      break;
 
     case "multiple_choice":
       // Load cache if it hasn't been loaded yet. For multiple choice, all options are availble in the allTypes list of content types
@@ -251,7 +252,8 @@ const getReferenceForObject = (
       match = choiceCache.filter((choice) => choice.id === refID);
       if (match.length > 0) {
         newRef = match[0][desiredRefType];
-      } else break;
+      }
+      break;
 
     case "modular_content":
       // Load cache if it hasn't been loaded yet
@@ -271,7 +273,8 @@ const getReferenceForObject = (
       Logger.log(`match=${match}`);
       if (match.length > 0) {
         newRef = match[0][desiredRefType];
-      } else break;
+      } 
+      break;
 
     case "taxonomy":
       // Load cache if it hasn't been loaded yet
@@ -290,7 +293,8 @@ const getReferenceForObject = (
       match = taxonomyCache.filter((term) => term.id === refID);
       if (match.length > 0) {
         newRef = match[0][desiredRefType];
-      } else break;
+      }
+      break;
   }
 
   if (newRef && newRef !== "") return `${desiredRefType}:${newRef},`;

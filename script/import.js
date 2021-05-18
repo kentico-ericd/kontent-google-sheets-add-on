@@ -379,7 +379,7 @@ const updateExistingItem = (
             // Cell could contain only numbers, convert to string first
             value = value.toString();
             break;
-          case "number":
+          case "number": {
             // Get currency_format column value
             const currencyFormat =
               currencyFormatColumn === -1
@@ -388,7 +388,8 @@ const updateExistingItem = (
             // Convert number string like '1,000.50' or '1 000,50' to float
             value = tryParseNumber(value, currencyFormat);
             break;
-          case "rich_text":
+          }
+          case "rich_text": {
             // Parse special ## macros
             value = parseRichText(value);
 
@@ -422,10 +423,11 @@ const updateExistingItem = (
             // We manually added this element+value instead of after the switch
             // so continue the foreach loop
             continue;
+          }
           case "asset":
           case "modular_content":
           case "multiple_choice":
-          case "taxonomy":
+          case "taxonomy": {
             // Value should be in format "<identifier type>:<identifier>,<identifier type>:<identifier>"
             // Split into expected format value:[{ <identifier type>: <identifier> }, { <identifier type>: <identifier> }]
             let ar = value.split(",");
@@ -438,6 +440,7 @@ const updateExistingItem = (
               }
             }
             break;
+          }
           case "date_time":
             if (value !== "")
               value = tryFormatDateTime(typeElements[k].codename, value);
