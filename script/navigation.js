@@ -103,6 +103,15 @@ const showHomeCard = () => {
     )
     .addSection(
       CardService.newCardSection()
+        .addWidget(validateButton)
+        .addWidget(
+          CardService.newTextParagraph().setText(
+            "Validate elements in the Sheet"
+          )
+        )
+    )
+    .addSection(
+      CardService.newCardSection()
         .addWidget(insertButton)
         .addWidget(
           CardService.newTextParagraph().setText(
@@ -424,7 +433,7 @@ const makeExportCard = () => {
 const makeValidateCard = () => {
   const section = CardService.newCardSection().addWidget(
     CardService.newTextParagraph().setText(
-      "You can use this menu to validate Sheet cells before the import process runs, to avoid errors during import. Click the <b>Validate</b> button below, and a new menu will appear containing any invalid values."
+      "You can use this menu to validate Sheet cells before the import process runs, to avoid errors during import. Click the <b>Validate</b> button below, and all validated cells will change color to indicate their status. Invalid cells will contain a note suggesting potential resolution."
     )
   );
 

@@ -1,6 +1,6 @@
 const parseRichText = (text) => {
   // A single index in this array will look like ["##macro##","macro"]
-  const matches = [...text.matchAll(REGEX)];
+  const matches = [...text.matchAll(MACRO_REGEX)];
   matches.forEach((match) => {
     const resolved = convertMacro(match[0], match[1]);
     if (resolved) {

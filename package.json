@@ -2,7 +2,7 @@
   "dependencies": {
     "@babel/core": "^7.14.2",
     "@babel/preset-env": "^7.14.2",
-    "@kentico-ericd/kontent-richtext-validation": "^0.0.10",
+    "@kentico-ericd/kontent-richtext-validation": "^0.0.13",
     "babel-loader": "^8.2.2",
     "copy-webpack-plugin": "^8.1.1"
   },
@@ -13,6 +13,6 @@
   },
   "scripts": {
     "gas": "webpack --config webpack.gas.js ",
-    "deploy": "npm run gas && cd dist && clasp push"
+    "push": "npm run gas && cd dist && clasp push"
   }
 }

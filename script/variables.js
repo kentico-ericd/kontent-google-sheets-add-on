@@ -39,7 +39,8 @@ const LINK_TO_ASSET =
   '<a data-asset-{identifier_type}="{identifier}">{text}</a>';
 const CONTENT_ITEM_LINK =
   '<object type="application/kenticocloud" data-type="item" data-{identifier_type}="{identifier}"></object>';
-const REGEX = /##(.*?)##/g;
+const MACRO_REGEX = /##(.*?)##/g;
+const TAG_REGEX = /<object[^>]+\b(data-type\s*=\s*['"]([^'"]+)['"][^>]*data-id\s*=\s*['"]([^'"]+)['"][^>]*)>/gm;
 const CONVERTERS = [
   ["link-item", LINK_TO_CONTENT_ITEM],
   ["link-asset", LINK_TO_ASSET],

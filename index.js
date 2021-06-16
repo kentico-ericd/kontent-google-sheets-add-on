@@ -1,7 +1,7 @@
 import { KontentRichText } from '@kentico-ericd/kontent-richtext-validation'
 
-const validate = (text) => {
-    return KontentRichText.validate(text);
+const validateRichText = (text) => {
+    return KontentRichText.validate(text, true);
 };
 
-export { validate };
+export { validateRichText };
