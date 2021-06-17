@@ -1,3 +1,6 @@
+/**
+ * Replaces all instances of custom ##macros## with their Kontent counterpart and returns the full text
+ */
 const parseRichText = (text) => {
   // A single index in this array will look like ["##macro##","macro"]
   const matches = [...text.matchAll(MACRO_REGEX)];

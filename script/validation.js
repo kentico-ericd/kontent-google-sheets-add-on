@@ -51,6 +51,9 @@ const validateColumn = (sheet, sheetColumn, elementType, componentIndex) => {
 };
 
 const validateRichText = (sheet, row, value, sheetColumn, componentIndex) => {
+  // Convert custom ##macros##
+  value = parseRichText(value);
+
   const valueRange = sheet.getRange(row + 2, sheetColumn),
     componentRange = sheet.getRange(row + 2, componentIndex + 1),
     result = AppLib.validateRichText(value);
