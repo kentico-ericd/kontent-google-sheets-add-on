@@ -40,7 +40,8 @@ const LINK_TO_ASSET =
 const CONTENT_ITEM_LINK =
   '<object type="application/kenticocloud" data-type="item" data-{identifier_type}="{identifier}"></object>';
 const MACRO_REGEX = /##(.*?)##/g;
-const TAG_REGEX = /<object[^>]+\b(data-type\s*=\s*['"]([^'"]+)['"][^>]*data-id\s*=\s*['"]([^'"]+)['"][^>]*)>/gm;
+const TAG_REGEX =
+  /<object[^>]+\b(data-type\s*=\s*['"]([^'"]+)['"][^>]*data-id\s*=\s*['"]([^'"]+)['"][^>]*)>/gm;
 const CONVERTERS = [
   ["link-item", LINK_TO_CONTENT_ITEM],
   ["link-asset", LINK_TO_ASSET],
@@ -69,7 +70,8 @@ const KEY_DOUPDATE = "doupdate_key",
   KEY_ITEMLINK_TEXT = "itemlink_text_key",
   KEY_ASSETLINK_IDENTIFIER = "assetlink_identifier_key",
   KEY_ASSETLINK_IDENTIFIERTYPE = "assetlink_identifiertype_key",
-  KEY_ASSETLINK_TEXT = "assetlink_text_key";
+  KEY_ASSETLINK_TEXT = "assetlink_text_key",
+  KEY_COMPONENT_IDENTIFIERTYPE = "component_identifiertype_key";
 const VALUE_IDENTIFIERTYPE_ID = "id",
   VALUE_IDENTIFIERTYPE_EXTERNAL = "external_id";
 

@@ -49,6 +49,63 @@ const convertMacro = (fullMacro, innerText) => {
   }
 };
 
+/**
+ * Called from navigation > macro menu to generate component macro
+ */
+const populateComponent = (e) => {
+  const formInput = e.commonEventObject.formInputs;
+  const typeCodename =
+    formInput[KEY_COMPONENT_IDENTIFIERTYPE].stringInputs.value[0];
+  const typeResponse = getType(typeCodename);
+
+  if (typeResponse.code === 200) {
+    const section = CardService.newCardSection().addWidget(
+      CardService.newTextParagraph().setText(
+        'Set the component values, then click "Generate" to copy the macro and component JSON into your Sheet.'
+      )
+    );
+    const elements = getTypeElements(typeResponse.data);
+    elements.forEach((element) => {
+      let inputHint = `<font color='#bbbbbb'>${
+        element.name ? element.name : element.codename
+      } (${element.type})</font>`;
+      if (element.is_required)
+        inputHint = `<font color='#ff725c'>*</font> ${inputHint}`;
+      const hint = CardService.newTextParagraph().setText(inputHint);
+      const input = CardService.newTextInput().setFieldName(element.codename);
+      if (element.type === "rich_text") input.setMultiline(true);
+
+      section.addWidget(input).addWidget(hint);
+    });
+
+    const fixedFooter = CardService.newFixedFooter().setPrimaryButton(
+      CardService.newTextButton()
+        .setText("Generate")
+        .setOnClickAction(
+          CardService.newAction()
+            .setFunctionName("generateComponent")
+            .setParameters({
+              elements: JSON.stringify(elements),
+              typeID: typeResponse.data.id
+            })
+        )
+    );
+
+    return CardService.newActionResponseBuilder()
+      .setNavigation(
+        CardService.newNavigation().pushCard(
+          CardService.newCardBuilder()
+            .addSection(section)
+            .setFixedFooter(fixedFooter)
+            .build()
+        )
+      )
+      .build();
+  } else {
+    // Failed to get type
+  }
+};
+
 const generateMacro = (e) => {
   const macro = e.parameters.macro;
   const formInput = e.commonEventObject.formInputs;
@@ -61,7 +118,7 @@ const generateMacro = (e) => {
         formInput[KEY_INLINEITEM_IDENTIFIERTYPE].stringInputs.value[0];
       output = MACRO_TEMPLATE_INLINEITEM.formatUnicorn({
         identifier_type: identifierType,
-        identifier: identifier,
+        identifier: identifier
       });
       break;
     case KEY_ITEMLINK_IDENTIFIER: {
@@ -72,7 +129,7 @@ const generateMacro = (e) => {
       output = MACRO_TEMPLATE_ITEMLINK.formatUnicorn({
         identifier_type: identifierType,
         identifier: identifier,
-        text: linkText,
+        text: linkText
       });
       break;
     }
@@ -84,34 +141,74 @@ const generateMacro = (e) => {
       output = MACRO_TEMPLATE_ASSETLINK.formatUnicorn({
         identifier_type: identifierType,
         identifier: identifier,
-        text: assetText,
+        text: assetText
       });
       break;
     }
   }
 
   if (output) {
-    return CardService.newActionResponseBuilder()
-      .setNavigation(
-        CardService.newNavigation().pushCard(
-          CardService.newCardBuilder()
-            .addSection(
-              CardService.newCardSection()
-                .addWidget(
-                  CardService.newTextParagraph().setText("We've generated a macro for you!")
-                )
-                .addWidget(
-                  CardService.newTextInput()
-                    .setFieldName("xxx")
-                    .setValue(output)
-                )
-                .addWidget(
-                  CardService.newTextParagraph().setText('Copy and paste it into your Sheet, then hit the "Back" arrow to generate more.')
-                )
-            )
-            .build()
-        )
-      )
-      .build();
+    return showMacro(output);
   }
+};
+
+const generateComponent = (e) => {
+  const id = generateGUID();
+  const typeID = e.parameters.typeID;
+  const elements = JSON.parse(e.parameters.elements);
+  const formInput = e.commonEventObject.formInputs;
+  const json = {
+    id: id,
+    type: {
+      id: typeID
+    },
+    elements: []
+  };
+  
+  elements.forEach((element) => {
+    const value = formInput[element.codename].stringInputs.value[0];
+    json.elements.push({
+      element: {
+        id: element.id
+      },
+      value: value
+    });
+  });
+
+  return showMacro("##test##", true, json);
+};
+
+const showMacro = (macro, isComponent = false, componentJSON = null) => {
+  const section = CardService.newCardSection()
+  .addWidget(
+    CardService.newTextParagraph().setText(
+      "We've generated a macro for you!"
+    )
+  )
+  .addWidget(
+    CardService.newTextInput().setFieldName("xxx").setValue(macro)
+  );
+  if(isComponent) {
+    section.addWidget(
+      CardService.newTextParagraph().setText(
+        "Below is the JSON you need to add to rich_text_components"
+      )
+    )
+    .addWidget(
+      CardService.newTextInput().setFieldName("yyy").setValue(JSON.stringify(componentJSON))
+    );
+  }
+  section.addWidget(
+    CardService.newTextParagraph().setText(
+      'Copy and paste it into your Sheet, then hit the "Back" arrow to generate more.'
+  ));
+  return CardService.newActionResponseBuilder()
+    .setNavigation(
+      CardService.newNavigation().pushCard(
+        CardService.newCardBuilder()
+          .addSection(section)
+          .build()
+      )
+    )
+    .build();
 };
