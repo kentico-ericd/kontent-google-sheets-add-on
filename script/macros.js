@@ -46,7 +46,7 @@ const convertMacro = (fullMacro, innerText) => {
   }
 };
 
-const insertMacro = (e) => {
+const generateMacro = (e) => {
   const macro = e.parameters.macro;
   const formInput = e.commonEventObject.formInputs;
   let identifier, identifierType, output;
@@ -88,9 +88,27 @@ const insertMacro = (e) => {
   }
 
   if (output) {
-    // Insert macro in active cell
-    const cell = SpreadsheetApp.getActiveSheet().getActiveCell();
-    const cellValue = cell.getValue();
-    cell.setValue(cellValue + output);
+    return CardService.newActionResponseBuilder()
+      .setNavigation(
+        CardService.newNavigation().pushCard(
+          CardService.newCardBuilder()
+            .addSection(
+              CardService.newCardSection()
+                .addWidget(
+                  CardService.newTextParagraph().setText("We've generated a macro for you!")
+                )
+                .addWidget(
+                  CardService.newTextInput()
+                    .setFieldName("xxx")
+                    .setValue(output)
+                )
+                .addWidget(
+                  CardService.newTextParagraph().setText('Copy and paste it into your Sheet, then hit the "Back" arrow to generate more.')
+                )
+            )
+            .build()
+        )
+      )
+      .build();
   }
 };

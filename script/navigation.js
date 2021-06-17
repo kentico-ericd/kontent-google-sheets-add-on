@@ -115,7 +115,7 @@ const showHomeCard = () => {
         .addWidget(insertButton)
         .addWidget(
           CardService.newTextParagraph().setText(
-            "Insert links and items into rich text"
+            "Generate macros for rich text"
           )
         )
     )
@@ -232,9 +232,9 @@ const navigateTo = (e = undefined) => {
 };
 
 const makeInsertCard = () => {
-  // Insert item link
+  // Generate item link
   const itemLinkSection = CardService.newCardSection().setHeader(
-    "Insert content item link"
+    "Generate content item link"
   );
   const itemLinkType = CardService.newSelectionInput()
     .setType(CardService.SelectionInputType.RADIO_BUTTON)
@@ -249,11 +249,11 @@ const makeInsertCard = () => {
     .setFieldName(KEY_ITEMLINK_TEXT)
     .setHint("Link text");
   const itemLinkButton = CardService.newTextButton()
-    .setText("Insert")
+    .setText("Generate")
     .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
     .setOnClickAction(
       CardService.newAction()
-        .setFunctionName("insertMacro")
+        .setFunctionName("generateMacro")
         .setParameters({ macro: KEY_ITEMLINK_IDENTIFIER })
     );
   itemLinkSection.addWidget(itemLinkType);
@@ -261,9 +261,9 @@ const makeInsertCard = () => {
   itemLinkSection.addWidget(itemLinkTextInput);
   itemLinkSection.addWidget(itemLinkButton);
 
-  // Insert inline item
+  // Generate inline item
   const inlineItemSection = CardService.newCardSection().setHeader(
-    "Insert inline content item"
+    "Generate inline content item"
   );
   const inlineItemType = CardService.newSelectionInput()
     .setType(CardService.SelectionInputType.RADIO_BUTTON)
@@ -275,20 +275,20 @@ const makeInsertCard = () => {
     .setFieldName(KEY_INLINEITEM_IDENTIFIER)
     .setHint("Enter the content item ID or external ID");
   const inlineItemButton = CardService.newTextButton()
-    .setText("Insert")
+    .setText("Generate")
     .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
     .setOnClickAction(
       CardService.newAction()
-        .setFunctionName("insertMacro")
+        .setFunctionName("generateMacro")
         .setParameters({ macro: KEY_INLINEITEM_IDENTIFIER })
     );
   inlineItemSection.addWidget(inlineItemType);
   inlineItemSection.addWidget(inlineItemInput);
   inlineItemSection.addWidget(inlineItemButton);
 
-  // Insert asset link
+  // Generate asset link
   const assetLinkSection =
-    CardService.newCardSection().setHeader("Insert asset link");
+    CardService.newCardSection().setHeader("Generate asset link");
   const assetLinkType = CardService.newSelectionInput()
     .setType(CardService.SelectionInputType.RADIO_BUTTON)
     .setTitle("Identifier type")
@@ -302,11 +302,11 @@ const makeInsertCard = () => {
     .setFieldName(KEY_ASSETLINK_TEXT)
     .setHint("Link text");
   const assetLinkButton = CardService.newTextButton()
-    .setText("Insert")
+    .setText("Generate")
     .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
     .setOnClickAction(
       CardService.newAction()
-        .setFunctionName("insertMacro")
+        .setFunctionName("generateMacro")
         .setParameters({ macro: KEY_ASSETLINK_IDENTIFIER })
     );
   assetLinkSection.addWidget(assetLinkType);
@@ -319,7 +319,7 @@ const makeInsertCard = () => {
     .addSection(
       CardService.newCardSection().addWidget(
         CardService.newTextParagraph().setText(
-          "To insert a macro, the cell must be selected but <b>not</b> in edit mode (the cursor should not be visible)."
+          'Find the macro you want to generate, fill in the fields, and click "Generate." A new window will pop up with the macro to copy/paste into your Sheet!'
         )
       )
     )

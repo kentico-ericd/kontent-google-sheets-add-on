@@ -90,7 +90,7 @@ Or, you can use special macros designed for this add-on. In the list below, the 
   | link-asset | Inserts a link to an asset | `macro:identifier_type:identifier:text` | `##link-asset:id:0013263e-f2a9-40b1-9a3e-7ab6510bafe5:asset##` |
   | item | Inserts an inline content item | `macro:identifier_type:identifier` | `##item:external-id:article6##` |
 
-You can insert content item links, asset links, and inline content items by entering the HTML or macro manually. Or, you can use the **Rich text macros** menu found in the add-on to insert macros:
+You can insert content item links, asset links, and inline content items by entering the HTML or macro manually. Or, you can use the **Rich text macros** menu found in the add-on to generate macros:
 
 ![Macro menu](/img/macromenu.png)
 
