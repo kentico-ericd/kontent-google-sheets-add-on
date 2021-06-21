@@ -109,7 +109,7 @@ const tryParseNumber = (number, format) => {
       // Remove inner spaces and dots
       number = number.replace(/\s/g, "").replace(/\./g, "");
       // Replace comma with decimal
-      number = number.replace(/\,/g, ".");
+      number = number.replace(/,/g, ".");
       break;
   }
 
