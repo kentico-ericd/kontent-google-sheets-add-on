@@ -86,7 +86,7 @@ const populateComponent = (e) => {
             .setFunctionName("generateComponent")
             .setParameters({
               elements: JSON.stringify(elements),
-              typeID: typeResponse.data.id
+              typeID: typeResponse.data.id,
             })
         )
     );
@@ -118,7 +118,7 @@ const generateMacro = (e) => {
         formInput[KEY_INLINEITEM_IDENTIFIERTYPE].stringInputs.value[0];
       output = MACRO_TEMPLATE_INLINEITEM.formatUnicorn({
         identifier_type: identifierType,
-        identifier: identifier
+        identifier: identifier,
       });
       break;
     case KEY_ITEMLINK_IDENTIFIER: {
@@ -129,7 +129,7 @@ const generateMacro = (e) => {
       output = MACRO_TEMPLATE_ITEMLINK.formatUnicorn({
         identifier_type: identifierType,
         identifier: identifier,
-        text: linkText
+        text: linkText,
       });
       break;
     }
@@ -141,7 +141,7 @@ const generateMacro = (e) => {
       output = MACRO_TEMPLATE_ASSETLINK.formatUnicorn({
         identifier_type: identifierType,
         identifier: identifier,
-        text: assetText
+        text: assetText,
       });
       break;
     }
@@ -156,58 +156,65 @@ const generateComponent = (e) => {
   const id = generateGUID();
   const typeID = e.parameters.typeID;
   const elements = JSON.parse(e.parameters.elements);
-  const formInput = e.commonEventObject.formInputs;
+  const formInputs = e.commonEventObject.formInputs;
   const json = {
     id: id,
     type: {
-      id: typeID
+      id: typeID,
     },
-    elements: []
+    elements: [],
   };
-  
+
   elements.forEach((element) => {
-    const value = formInput[element.codename].stringInputs.value[0];
-    json.elements.push({
-      element: {
-        id: element.id
-      },
-      value: value
-    });
+    let value = "";
+    const formInput = formInputs[element.codename];
+    if (formInput) {
+      value = formInput.stringInputs.value[0];
+    }
+
+    const parsedValue = getValueForUpsert(
+      value,
+      element.type,
+      element.codename,
+      "US"
+    );
+    if (parsedValue) json.elements.push(parsedValue);
   });
 
-  return showMacro("##test##", true, json);
+  const macro = MACRO_TEMPLATE_COMPONENT.formatUnicorn({
+    identifier: id,
+  });
+  return showMacro(macro, true, json);
 };
 
 const showMacro = (macro, isComponent = false, componentJSON = null) => {
   const section = CardService.newCardSection()
-  .addWidget(
-    CardService.newTextParagraph().setText(
-      "We've generated a macro for you!"
-    )
-  )
-  .addWidget(
-    CardService.newTextInput().setFieldName("xxx").setValue(macro)
-  );
-  if(isComponent) {
-    section.addWidget(
-      CardService.newTextParagraph().setText(
-        "Below is the JSON you need to add to rich_text_components"
-      )
-    )
     .addWidget(
-      CardService.newTextInput().setFieldName("yyy").setValue(JSON.stringify(componentJSON))
-    );
+      CardService.newTextParagraph().setText("We've generated a macro for you!")
+    )
+    .addWidget(CardService.newTextInput().setFieldName("xxx").setValue(macro));
+  if (isComponent) {
+    section
+      .addWidget(
+        CardService.newTextParagraph().setText(
+          "Below is the JSON you need to add to rich_text_components"
+        )
+      )
+      .addWidget(
+        CardService.newTextInput()
+          .setFieldName("yyy")
+          .setValue(JSON.stringify(componentJSON))
+      );
   }
   section.addWidget(
     CardService.newTextParagraph().setText(
       'Copy and paste it into your Sheet, then hit the "Back" arrow to generate more.'
-  ));
+    )
+  );
   return CardService.newActionResponseBuilder()
     .setNavigation(
       CardService.newNavigation().pushCard(
-        CardService.newCardBuilder()
-          .addSection(section)
-          .build()
+        CardService.newCardBuilder().addSection(section).build()
       )
     )
     .build();

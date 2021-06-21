@@ -33,6 +33,7 @@ const ASSET_ENDPOINT =
   "https://manage.kontent.ai/v2/projects/{project_id}/assets";
 
 // Macros
+const COMPONENT = '<object type="application/kenticocloud" data-type="component" data-id="{identifier}"></object>';
 const LINK_TO_CONTENT_ITEM =
   '<a data-item-{identifier_type}="{identifier}">{text}</a>';
 const LINK_TO_ASSET =
@@ -43,11 +44,13 @@ const MACRO_REGEX = /##(.*?)##/g;
 const TAG_REGEX =
   /<object[^>]+\b(data-type\s*=\s*['"]([^'"]+)['"][^>]*data-id\s*=\s*['"]([^'"]+)['"][^>]*)>/gm;
 const CONVERTERS = [
+  ["component", COMPONENT],
   ["link-item", LINK_TO_CONTENT_ITEM],
   ["link-asset", LINK_TO_ASSET],
   ["item", CONTENT_ITEM_LINK],
 ];
-const MACRO_TEMPLATE_ITEMLINK =
+const MACRO_TEMPLATE_COMPONENT = "##component:id:{identifier}##",
+  MACRO_TEMPLATE_ITEMLINK =
     "##link-item:{identifier_type}:{identifier}:{text}##",
   MACRO_TEMPLATE_INLINEITEM = "##item:{identifier_type}:{identifier}##",
   MACRO_TEMPLATE_ASSETLINK =
