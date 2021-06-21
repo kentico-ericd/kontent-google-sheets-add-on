@@ -86,9 +86,10 @@ For example: `Buy our <a data-item-external-id="F4891FB5-5215-4795-8A6F-18A4F683
 Or, you can use special macros designed for this add-on. In the list below, the `identifier_type` can be "id" or "external-id":  
   | macro | description | format | example |
   | ----- | ----------- | ------ | ------- |
-  | link-item | Inserts a link to a content item | `macro:identifier_type:identifier:text` | `##link-item:id:5946ca5d-cebe-4be1-b5f0-4cd0a0e43fb5:coffee is good##` |
-  | link-asset | Inserts a link to an asset | `macro:identifier_type:identifier:text` | `##link-asset:id:0013263e-f2a9-40b1-9a3e-7ab6510bafe5:asset##` |
-  | item | Inserts an inline content item | `macro:identifier_type:identifier` | `##item:external-id:article6##` |
+  | link-item | Inserts a link to a content item | `link-item:identifier_type:identifier:text` | `##link-item:id:5946ca5d-cebe-4be1-b5f0-4cd0a0e43fb5:coffee is good##` |
+  | link-asset | Inserts a link to an asset | `link-asset:identifier_type:identifier:text` | `##link-asset:id:0013263e-f2a9-40b1-9a3e-7ab6510bafe5:asset##` |
+  | item | Inserts an inline content item | `item:identifier_type:identifier` | `##item:external-id:article6##` |
+  | component | Inserts a component | `component:identifier_type:identifier` | `##component:id:ac21f31d-9d4f-4ec6-b666-90e0827ffde7`
 
 You can insert content item links, asset links, and inline content items by entering the HTML or macro manually. Or, you can use the **Rich text macros** menu found in the add-on to generate macros:
 
@@ -106,7 +107,7 @@ For example, if you have a Rich Text element that contains this component:
 then the `rich_text_components` must contain a component with that ID, or the import will fail. The format of components can be found in [our documentation](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/component-object). Using the above example, the `rich_text_components` value could look like this:
 
 ```
-{
+[{
   "id": "382abced-bfb6-4ee9-a2d4-2c3b8cd8ba5d",
   "type": {
     "codename": "article"
@@ -119,8 +120,12 @@ then the `rich_text_components` must contain a component with that ID, or the im
       "value": "This is some text in the component"
     }
   ]
-}
+}]
 ```
+
+You can use the __Rich text macros__ menu to generate the JSON of a component if you don't wish to enter it manually. In this menu, you will select the content type of the component, and the elements of that type will appear. Once the values are populated, the macro and JSON are both generated:
+
+![Generated component](/img/generatedcomponent.png)
 
 # Importing the Content
 Click the Kontent icon in the sidebar and open the __Import__ menu. You have two options before starting the import:

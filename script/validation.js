@@ -69,9 +69,11 @@ const validateRichText = (sheet, row, value, sheetColumn, componentIndex) => {
     if (tagMatches.length > 0) {
       try {
         const componentJSON = JSON.parse(componentRange.getValue());
+        if(!(componentJSON instanceof Array)) {
+          // Components must be an array
+          throw new Error('Must be an array');
+        }
 
-        // Component JSON was parsed, clear any previous error formatting
-        addSuccess(componentRange);
         tagMatches.forEach((match) => {
           if (match[2] === "component") {
             const componentID = match[3];
@@ -90,11 +92,8 @@ const validateRichText = (sheet, row, value, sheetColumn, componentIndex) => {
         });
       } catch (e) {
         // Component JSON couldn't be parsed
-        if (e) {
-          success = false;
-          addError(componentRange, `Invalid JSON: ${e}`);
-          addError(valueRange, 'Components in rich_text_components column could not be parsed.');
-        }
+        success = false;
+        addError(valueRange, `Error in rich_text_components column: ${e}`);
       }
       finally {
         // RTE validation and component validation succeeded
@@ -105,10 +104,14 @@ const validateRichText = (sheet, row, value, sheetColumn, componentIndex) => {
     } else {
       // RTE validation succeeded without components
       addSuccess(valueRange);
-      addSuccess(componentRange);
     }
   }
 };
+
+const clearFormatting = (range) => {
+  range.clearNote();
+  range.setBackground("#ffffff");
+}
 
 const addError = (range, message) => {
   range.clearNote();

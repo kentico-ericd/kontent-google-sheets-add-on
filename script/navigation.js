@@ -76,7 +76,7 @@ const showHomeCard = () => {
       .setText("Help")
       .setOnClickAction(
         CardService.newAction().setFunctionName("openUrl").setParameters({
-          url: "https://github.com/Kentico/kontent-google-sheets-add-on#-google-sheets-import",
+          url: "https://github.com/Kentico/kontent-google-sheets-add-on#-google-sheets-import"
         })
       )
   );
@@ -261,6 +261,32 @@ const makeInsertCard = () => {
   itemLinkSection.addWidget(itemLinkTextInput);
   itemLinkSection.addWidget(itemLinkButton);
 
+  // Generate component - get all content types for dropdown
+  let componentSection;
+  const contentTypesResponse = loadTypes();
+  if (contentTypesResponse.code === 200) {
+    componentSection =
+      CardService.newCardSection().setHeader("Generate component");
+    const componentType = CardService.newSelectionInput()
+      .setType(CardService.SelectionInputType.DROPDOWN)
+      .setTitle("Component type")
+      .setFieldName(KEY_COMPONENT_IDENTIFIERTYPE);
+    contentTypesResponse.data.forEach((type) => {
+      componentType.addItem(type.name, type.codename, false);
+    });
+    const componentButton = CardService.newTextButton()
+      .setText("Set values &gt;")
+      .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
+      .setOnClickAction(
+        CardService.newAction()
+          .setFunctionName("populateComponent")
+          .setParameters({ type: KEY_COMPONENT_IDENTIFIERTYPE })
+      );
+
+    componentSection.addWidget(componentType);
+    componentSection.addWidget(componentButton);
+  }
+
   // Generate inline item
   const inlineItemSection = CardService.newCardSection().setHeader(
     "Generate inline content item"
@@ -287,8 +313,9 @@ const makeInsertCard = () => {
   inlineItemSection.addWidget(inlineItemButton);
 
   // Generate asset link
-  const assetLinkSection =
-    CardService.newCardSection().setHeader("Generate asset link");
+  const assetLinkSection = CardService.newCardSection().setHeader(
+    "Generate asset link"
+  );
   const assetLinkType = CardService.newSelectionInput()
     .setType(CardService.SelectionInputType.RADIO_BUTTON)
     .setTitle("Identifier type")
@@ -324,6 +351,7 @@ const makeInsertCard = () => {
       )
     )
     .addSection(itemLinkSection)
+    .addSection(componentSection)
     .addSection(inlineItemSection)
     .addSection(assetLinkSection)
     .build();
@@ -355,7 +383,7 @@ const makeGenerateCard = () => {
       .setText("Help")
       .setOnClickAction(
         CardService.newAction().setFunctionName("openUrl").setParameters({
-          url: "https://github.com/Kentico/kontent-google-sheets-add-on#preparing-the-sheet",
+          url: "https://github.com/Kentico/kontent-google-sheets-add-on#preparing-the-sheet"
         })
       )
   );
