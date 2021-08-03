@@ -49,8 +49,11 @@ const exportContentItems = (e) => {
   // Loop through types and add variants to Sheet
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   allTypes.forEach((type) => {
+    // Get elements for type- type object doesn't contain snippets, so load them here
+    const typeElements = getTypeElements(type);
     const values = [];
     const sheet = ss.getSheetByName(type.codename);
+    
     if (sheet != null) {
       const headers = sheet.getDataRange().getValues();
       let componentColumn = -1;
@@ -76,7 +79,8 @@ const exportContentItems = (e) => {
               allItems,
               languages,
               components,
-              allTypes
+              allTypes,
+              typeElements
             );
             variantData.push(value);
           }
@@ -163,7 +167,8 @@ const getValueForHeader = (
   allItems,
   languages,
   components,
-  allTypes
+  allTypes,
+  typeElements
 ) => {
   const contentItem = allItems.filter((item) => item.id === variant.item.id)[0];
   switch (header) {
@@ -183,7 +188,7 @@ const getValueForHeader = (
   }
 
   // Find element ID from type and get matching value from variant
-  const typeElement = type.elements.filter((ele) => ele.codename === header);
+  const typeElement = typeElements.filter((ele) => ele.codename === header);
   if (typeElement.length === 1) {
     const elementId = typeElement[0].id;
     const variantElement = variant.elements.filter(
@@ -270,7 +275,6 @@ const getReferenceForObject = (
 
       // Try to find item by ID
       match = modularCache.filter((item) => item.id === refID);
-      Logger.log(`match=${match}`);
       if (match.length > 0) {
         newRef = match[0][desiredRefType];
       } 
