@@ -15,33 +15,69 @@ const getType = (codename) => {
 };
 
 const loadTypes = () => {
-  const response = executeGetRequest(TYPES_ENDPOINT);
+  const keys = loadKeys();
+  const allTypes = [];
+  let response = executeGetRequest(TYPES_ENDPOINT);
   if (response.getResponseCode() === 200) {
     // Success
-    const types = JSON.parse(response.getContentText()).types.sort(function (
-      a,
-      b
-    ) {
-      var val1 = a.name.toUpperCase();
-      var val2 = b.name.toUpperCase();
-      if (val1 < val2) {
-        return -1;
-      }
-      if (val1 > val2) {
-        return 1;
-      }
+    let json = JSON.parse(response.getContentText());
+    allTypes.push(...json.types);
 
-      return 0;
-    });
+    // Check if there are more types to get
+    while (json.pagination.continuation_token) {
+      const token = json.pagination.continuation_token;
+      const url = json.pagination.next_page;
+      const options = {
+        method: "get",
+        contentType: "application/json",
+        muteHttpExceptions: true,
+        headers: {
+          Authorization: "Bearer " + keys.cmkey,
+          "x-continuation": token,
+        },
+      };
+
+      response = execute(url, options);
+      if (response.getResponseCode() === 200) {
+        // Add types to list and continue loop
+        json = JSON.parse(response.getContentText());
+        allTypes.push(...json.types);
+      } else {
+        errorCounter++;
+        return {
+          code: response.getResponseCode(),
+          data: response.getContentText(),
+        };
+      }
+    }
+  } else {
+    // Failure
+    errorCounter++;
     return {
-      code: 200,
-      data: types,
+      code: response.getResponseCode(),
+      data: JSON.parse(response.getContentText()).message,
     };
   }
-  // Failure
+
+  // Finished loop without error, return all types sorted by name
+  const types = allTypes.sort(function (
+    a,
+    b
+  ) {
+    var val1 = a.name.toUpperCase();
+    var val2 = b.name.toUpperCase();
+    if (val1 < val2) {
+      return -1;
+    }
+    if (val1 > val2) {
+      return 1;
+    }
+
+    return 0;
+  });
   return {
-    code: response.getResponseCode(),
-    data: JSON.parse(response.getContentText()).message,
+    code: 200,
+    data: types,
   };
 };
 
