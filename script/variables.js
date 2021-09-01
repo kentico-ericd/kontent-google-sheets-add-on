@@ -117,6 +117,10 @@ let resultSheetName = "";
 // Content item cache- ALL content items in project!
 let contentItemCache = [];
 
+// Paging for Generate card
+let allTypes = [];
+let TYPE_PAGING_PAGESIZE = 30;
+
 // API keys
 let mPID, mCMKEY, mPREVIEWKEY;
 

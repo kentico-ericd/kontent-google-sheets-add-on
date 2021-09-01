@@ -207,7 +207,7 @@ const navigateTo = (e = undefined) => {
   const cardName = e ? e.parameters.card : "";
   switch (cardName) {
     case CARD_GENERATE:
-      nav = CardService.newNavigation().pushCard(makeGenerateCard());
+      nav = CardService.newNavigation().pushCard(makeGenerateCard(e));
       break;
     case CARD_IMPORT:
       nav = CardService.newNavigation().pushCard(makeImportCard());
@@ -357,52 +357,103 @@ const makeInsertCard = () => {
     .build();
 };
 
-const makeGenerateCard = () => {
-  const allSections = [];
-  const response = loadTypes();
+const makeGenerateCard = (e) => {
+  let startingPos = 0,
+    endingPos = 0;
+  const section = CardService.newCardSection();
 
-  if (response.code === 200) {
-    const types = response.data;
-    types.forEach((type) => {
-      const section = CardService.newCardSection();
-      section.addWidget(
-        CardService.newTextButton()
-          .setText(type.name)
-          .setOnClickAction(
-            CardService.newAction()
-              .setFunctionName("makeSheetForType")
-              .setParameters({ json: JSON.stringify(type) })
-          )
-      );
-      allSections.push(section);
-    });
-  } else {
-    const section = CardService.newCardSection();
-    section.addWidget(CardService.newTextParagraph().setText(response.data));
-    allSections.push(section);
+  // Get paging parameters
+  if (e.parameters && e.parameters.startingPos) {
+    startingPos = parseInt(e.parameters.startingPos);
   }
 
-  const fixedFooter = CardService.newFixedFooter().setPrimaryButton(
-    CardService.newTextButton()
-      .setText("Help")
-      .setOnClickAction(
-        CardService.newAction().setFunctionName("openUrl").setParameters({
-          url: "https://github.com/Kentico/kontent-google-sheets-add-on#preparing-the-sheet",
-        })
-      )
+  if (allTypes.length === 0) {
+    // Load all types into memory
+    const response = loadTypes();
+    if (response.code === 200) {
+      allTypes = response.data;
+      allTypes.sort(function (a, b) {
+        var val1 = a.name.toUpperCase();
+        var val2 = b.name.toUpperCase();
+        if (val1 < val2) {
+          return -1;
+        }
+        if (val1 > val2) {
+          return 1;
+        }
+
+        return 0;
+      });
+    } else {
+      // Failure
+      section.addWidget(CardService.newTextParagraph().setText(response.data));
+    }
+  }
+
+  // Validate paging parameters are within array
+  startingPos = Math.max(0, startingPos);
+  endingPos = startingPos + TYPE_PAGING_PAGESIZE;
+  endingPos = Math.min(allTypes.length, endingPos);
+
+  section.addWidget(
+    CardService.newTextParagraph().setText(
+      `<b>Displaying (${startingPos}-${endingPos}) of ${allTypes.length}</b>`
+    )
   );
 
-  const card = CardService.newCardBuilder()
+  // Add types to section
+  const pagedTypes = allTypes.slice(startingPos, endingPos);
+  pagedTypes.forEach((type) => {
+    section.addWidget(
+      CardService.newTextButton()
+        .setText(type.name)
+        .setOnClickAction(
+          CardService.newAction()
+            .setFunctionName("makeSheetForType")
+            .setParameters({ json: JSON.stringify(type) })
+        )
+    );
+  });
+
+  let nextDisabled = endingPos >= allTypes.length;
+  let prevDisabled = startingPos === 0;
+
+  const fixedFooter = CardService.newFixedFooter()
+    .setSecondaryButton(
+      CardService.newTextButton()
+        .setText("Next")
+        .setDisabled(nextDisabled)
+        .setOnClickAction(
+          CardService.newAction().setFunctionName("navigateTo").setParameters({
+            card: CARD_GENERATE,
+            startingPos: endingPos.toString(),
+          })
+        )
+    )
+    .setPrimaryButton(
+      CardService.newTextButton()
+        .setText("Prev")
+        .setDisabled(prevDisabled)
+        .setOnClickAction(
+          CardService.newAction()
+            .setFunctionName("navigateTo")
+            .setParameters({
+              card: CARD_GENERATE,
+              startingPos: (startingPos - TYPE_PAGING_PAGESIZE).toString(),
+            })
+        )
+    );
+
+  return CardService.newCardBuilder()
     .setName(CARD_GENERATE)
     .setHeader(
       CardService.newCardHeader().setTitle(
         "Generate a new Sheet from a content type with the required headers."
       )
-    );
-
-  allSections.forEach((s) => card.addSection(s));
-
-  return card.setFixedFooter(fixedFooter).build();
+    )
+    .addSection(section)
+    .setFixedFooter(fixedFooter)
+    .build();
 };
 
 const openUrl = (e) => {
