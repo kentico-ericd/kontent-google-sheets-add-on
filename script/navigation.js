@@ -76,7 +76,7 @@ const showHomeCard = () => {
       .setText("Help")
       .setOnClickAction(
         CardService.newAction().setFunctionName("openUrl").setParameters({
-          url: "https://github.com/Kentico/kontent-google-sheets-add-on#-google-sheets-import"
+          url: "https://github.com/Kentico/kontent-google-sheets-add-on#-google-sheets-import",
         })
       )
   );
@@ -358,12 +358,13 @@ const makeInsertCard = () => {
 };
 
 const makeGenerateCard = () => {
-  const section = CardService.newCardSection();
+  const allSections = [];
   const response = loadTypes();
 
   if (response.code === 200) {
     const types = response.data;
     types.forEach((type) => {
+      const section = CardService.newCardSection();
       section.addWidget(
         CardService.newTextButton()
           .setText(type.name)
@@ -373,9 +374,12 @@ const makeGenerateCard = () => {
               .setParameters({ json: JSON.stringify(type) })
           )
       );
+      allSections.push(section);
     });
   } else {
+    const section = CardService.newCardSection();
     section.addWidget(CardService.newTextParagraph().setText(response.data));
+    allSections.push(section);
   }
 
   const fixedFooter = CardService.newFixedFooter().setPrimaryButton(
@@ -383,21 +387,22 @@ const makeGenerateCard = () => {
       .setText("Help")
       .setOnClickAction(
         CardService.newAction().setFunctionName("openUrl").setParameters({
-          url: "https://github.com/Kentico/kontent-google-sheets-add-on#preparing-the-sheet"
+          url: "https://github.com/Kentico/kontent-google-sheets-add-on#preparing-the-sheet",
         })
       )
   );
 
-  return CardService.newCardBuilder()
+  const card = CardService.newCardBuilder()
     .setName(CARD_GENERATE)
     .setHeader(
       CardService.newCardHeader().setTitle(
         "Generate a new Sheet from a content type with the required headers."
       )
-    )
-    .addSection(section)
-    .setFixedFooter(fixedFooter)
-    .build();
+    );
+
+  allSections.forEach((s) => card.addSection(s));
+
+  return card.setFixedFooter(fixedFooter).build();
 };
 
 const openUrl = (e) => {
