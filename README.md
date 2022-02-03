@@ -39,7 +39,7 @@ The headers (first row) of your Sheet must contain the code names of the content
 In addition to the element code names, the header row can also contain these other headers:
 
 - __name__ (required): The name of the content item to create or update.
-- __external_id__ (optional): The [external ID](https://docs.kontent.ai/reference/management-api-v2#section/External-IDs-for-imported-content) of the content item to update.
+- __external_id__ (optional): The [external ID](https://kontent.ai/learn/reference/management-api-v2#section/External-IDs-for-imported-content) of the content item to update.
 - __codename__ (optional): The codename of the content item being created/updated.
 - __language__ (optional): The language of the variant to update. This should match the code name of a language in the project’s Localization page, and is case sensitive. If a language is not provided, the add-on will get the project's default language using Management API.
 - __currency_format__ (optional): Used to determine how values for Kontent "number" elements are parsed. US-formatted strings ("1,500.75") and EU-formatted strings ("1 500,75") are parsed into a valid number based on this setting. Should be either `US` or `EU`. If omitted or empty, US formatting will be used.
@@ -68,7 +68,7 @@ If you are using EU formatting, we recommend changing any Number columns in the 
 - __Date & Time__: The script will first try to parse the value using the JavaScript [Date(string) constructor](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date), so any valid DateTime string will succeed. A typical valid string would be in the format `mm/dd/yyyy hh:mm am/pm`. The script will also accept strings that use dashes instead of slashes (`12-25-2019 6:00 AM`) or timestamps from SQL (`2019-12-25 06:00:00.0000000`).
 - __URL Slug__: There is no special formatting needed for URL Slug elements. If a value is provided, the element's `mode` will be changed to "custom" and no longer auto-generate based on another content type element. To revert the URL Slug element back to auto-generation, set the value to `#autogenerate#`.
 - __Taxonomy, Multiple Choice, Assets, Linked items__: Values for these elements follow the same format:  `<identifier type>:<identifier>` in a comma-separated list. The identifier can be `id`, `codename`, or `external_id` depending on the type of element.  
-An example of multiple linked items in an element is `codename:birthday_party,id:eba1015a-dfd4-5736-abc1-5de3ed5df732`. You can find the supported reference types for each element in [our documentation](https://docs.kontent.ai/reference/management-api-v2#tag/Elements-in-language-variants), or in the table below:
+An example of multiple linked items in an element is `codename:birthday_party,id:eba1015a-dfd4-5736-abc1-5de3ed5df732`. You can find the supported reference types for each element in the [Management API reference](https://kontent.ai/learn/reference/management-api-v2#tag/Elements-in-language-variants), or in the table below:
   | Element         | Allowed references         |
   | --------------- | -------------------------- |
   | Asset           | id, external_id            |
@@ -78,10 +78,10 @@ An example of multiple linked items in an element is `codename:birthday_party,id
 
 ### Setting Rich Text values
 
- This element will most likely require the most pre-processing; try to avoid complex HTML and text formatting. The list of supported HTML elements and their syntax can be found in our [documentation](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/html5-elements-allowed-in-rich-text).
-Notably, you can insert links to other content items or assets by referencing and ID or external ID using the format described in [this section](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/links-in-rich-text).
+ This element will most likely require the most pre-processing; try to avoid complex HTML and text formatting. The list of supported HTML elements and their syntax can be found in the [Management API reference](https://kontent.ai/learn/reference/management-api-v2#section/Rich-text-element/html5-elements-allowed-in-rich-text).
+Notably, you can insert links to other content items or assets by referencing and ID or external ID using the format described in [links in rich text](https://kontent.ai/learn/reference/management-api-v2#section/Rich-text-element/links-in-rich-text).
 
-For example: `Buy our <a data-item-external-id="F4891FB5-5215-4795-8A6F-18A4F68394FD">new coffee</a>`. You can also add inline content items using the syntax [here](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/content-items-in-rich-text), for example `<object type="application/kenticocloud" data-type="item" data-external-id="59713"></object>`.
+For example: `Buy our <a data-item-external-id="F4891FB5-5215-4795-8A6F-18A4F68394FD">new coffee</a>`. You can also add inline content items using the [supported syntax](https://kontent.ai/learn/reference/management-api-v2#section/Rich-text-element/content-items-in-rich-text), for example `<object type="application/kenticocloud" data-type="item" data-external-id="59713"></object>`.
 
 Or, you can use special macros designed for this add-on. In the list below, the `identifier_type` can be "id" or "external-id":  
   | macro | description | format | example |
@@ -104,7 +104,7 @@ For example, if you have a Rich Text element that contains this component:
 <object type="application/kenticocloud" data-type="component" data-id="382abced-bfb6-4ee9-a2d4-2c3b8cd8ba5d"></object>
 ```
 
-then the `rich_text_components` must contain a component with that ID, or the import will fail. The format of components can be found in [our documentation](https://docs.kontent.ai/reference/management-api-v2#section/Rich-text-element/component-object). Using the above example, the `rich_text_components` value could look like this:
+then the `rich_text_components` must contain a component with that ID, or the import will fail. The format of components can be found in [Management API reference](https://kontent.ai/learn/reference/management-api-v2#section/Rich-text-element/component-object). Using the above example, the `rich_text_components` value could look like this:
 
 ```
 [{
