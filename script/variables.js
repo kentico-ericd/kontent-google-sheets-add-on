@@ -74,7 +74,8 @@ const KEY_DOUPDATE = "doupdate_key",
   KEY_ASSETLINK_IDENTIFIER = "assetlink_identifier_key",
   KEY_ASSETLINK_IDENTIFIERTYPE = "assetlink_identifiertype_key",
   KEY_ASSETLINK_TEXT = "assetlink_text_key",
-  KEY_COMPONENT_IDENTIFIERTYPE = "component_identifiertype_key";
+  KEY_COMPONENT_IDENTIFIERTYPE = "component_identifiertype_key",
+  KEY_SELECTED_TYPE = "selected_content_type";
 const VALUE_IDENTIFIERTYPE_ID = "id",
   VALUE_IDENTIFIERTYPE_EXTERNAL = "external_id";
 
@@ -117,9 +118,8 @@ let resultSheetName = "";
 // Content item cache- ALL content items in project!
 let contentItemCache = [];
 
-// Paging for Generate card
+// Content type cache for Generate/Export card
 let allTypes = [];
-let TYPE_PAGING_PAGESIZE = 30;
 
 // API keys
 let mPID, mCMKEY, mPREVIEWKEY;

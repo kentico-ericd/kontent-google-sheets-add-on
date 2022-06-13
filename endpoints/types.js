@@ -130,23 +130,30 @@ const getTypeElements = (type) => {
 };
 
 /**
- * Called from Generate and Export menu, creates a Sheet with the content type code name
+ * Called from the Generate menu, creates a Sheet with the content type code name
  */
 const makeSheetForType = (e) => {
-  const contentType = JSON.parse(e.commonEventObject.parameters.json);
+  const typeCodeName = e.commonEventObject.formInputs[KEY_SELECTED_TYPE].stringInputs.value[0];
+  makeSheet(typeCodeName);
+};
 
-  // Check if sheet with code name already exists
+const makeSheet = (typeCodeName) => {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(contentType.codename);
+  const sheet = ss.getSheetByName(typeCodeName);
   if (sheet != null) {
     showAlert("A sheet already exists with this content type code name.");
     return;
   }
 
-  const newSheet = ss.insertSheet(contentType.codename);
-  const elements = getTypeElements(contentType);
+  const newSheet = ss.insertSheet(typeCodeName);
+  const contentType = getType(typeCodeName);
+  if (contentType.code !== 200) {
+    showAlert("Unable to retrieve content type.");
+    return;
+  }
 
-  // Generate headers
+  // Get elements and generate headers
+  const elements = getTypeElements(contentType.data);
   const headers = [
     "name",
     "external_id",
@@ -163,4 +170,5 @@ const makeSheetForType = (e) => {
 
   const range = newSheet.getRange(1, 1, 1, headers.length);
   range.setValues([headers]);
-};
+  return newSheet;
+}

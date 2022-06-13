@@ -357,16 +357,8 @@ const makeInsertCard = () => {
     .build();
 };
 
-const makeGenerateCard = (e) => {
-  let startingPos = 0,
-    endingPos = 0;
+const makeGenerateCard = () => {
   const section = CardService.newCardSection();
-
-  // Get paging parameters
-  if (e.parameters && e.parameters.startingPos) {
-    startingPos = parseInt(e.parameters.startingPos);
-  }
-
   if (allTypes.length === 0) {
     // Load all types into memory
     const response = loadTypes();
@@ -386,61 +378,27 @@ const makeGenerateCard = (e) => {
       });
     } else {
       // Failure
-      section.addWidget(CardService.newTextParagraph().setText(response.data));
+      showAlert(`Error retrieving content types: ${response.data}`);
+      return;
     }
   }
 
-  // Validate paging parameters are within array
-  startingPos = Math.max(0, startingPos);
-  endingPos = startingPos + TYPE_PAGING_PAGESIZE;
-  endingPos = Math.min(allTypes.length, endingPos);
+  const dropDown = CardService.newSelectionInput()
+    .setType(CardService.SelectionInputType.DROPDOWN)
+    .setTitle("Choose the content type to generate a Sheet for.")
+    .setFieldName(KEY_SELECTED_TYPE);
+  for (const type of allTypes) {
+    dropDown.addItem(type.name, type.codename, false);
+  }
+  section.addWidget(dropDown);
 
-  section.addWidget(
-    CardService.newTextParagraph().setText(
-      `<b>Displaying (${startingPos}-${endingPos}) of ${allTypes.length}</b>`
-    )
-  );
-
-  // Add types to section
-  const pagedTypes = allTypes.slice(startingPos, endingPos);
-  pagedTypes.forEach((type) => {
-    section.addWidget(
+  const fixedFooter = CardService.newFixedFooter()
+    .setPrimaryButton(
       CardService.newTextButton()
-        .setText(type.name)
+        .setText("Generate")
         .setOnClickAction(
           CardService.newAction()
             .setFunctionName("makeSheetForType")
-            .setParameters({ json: JSON.stringify(type) })
-        )
-    );
-  });
-
-  let nextDisabled = endingPos >= allTypes.length;
-  let prevDisabled = startingPos === 0;
-
-  const fixedFooter = CardService.newFixedFooter()
-    .setSecondaryButton(
-      CardService.newTextButton()
-        .setText("Next")
-        .setDisabled(nextDisabled)
-        .setOnClickAction(
-          CardService.newAction().setFunctionName("navigateTo").setParameters({
-            card: CARD_GENERATE,
-            startingPos: endingPos.toString(),
-          })
-        )
-    )
-    .setPrimaryButton(
-      CardService.newTextButton()
-        .setText("Prev")
-        .setDisabled(prevDisabled)
-        .setOnClickAction(
-          CardService.newAction()
-            .setFunctionName("navigateTo")
-            .setParameters({
-              card: CARD_GENERATE,
-              startingPos: (startingPos - TYPE_PAGING_PAGESIZE).toString(),
-            })
         )
     );
 
@@ -473,6 +431,30 @@ const showAlert = (message, title = "Message") => {
 };
 
 const makeExportCard = () => {
+  if (allTypes.length === 0) {
+    // Load all types into memory
+    const response = loadTypes();
+    if (response.code === 200) {
+      allTypes = response.data;
+      allTypes.sort(function (a, b) {
+        var val1 = a.name.toUpperCase();
+        var val2 = b.name.toUpperCase();
+        if (val1 < val2) {
+          return -1;
+        }
+        if (val1 > val2) {
+          return 1;
+        }
+
+        return 0;
+      });
+    } else {
+      // Failure
+      showAlert(`Error retrieving content types: ${response.data}`);
+      return;
+    }
+  }
+
   const translateIdSwitch = CardService.newKeyValue()
     .setTopLabel("Translate IDs")
     .setContent(
@@ -486,29 +468,34 @@ const makeExportCard = () => {
         .setValue("false")
     );
 
-  const section = CardService.newCardSection()
-    .addWidget(
-      CardService.newTextParagraph().setText(
-        "Click the <b>Export</b> button to export all content items from your Kontent project into new Sheets. A Sheet will be created per content type, and content items of that type will appear as rows of that Sheet."
-      )
-    )
-    .addWidget(
-      CardService.newTextParagraph().setText(
-        "Please delete any existing Sheets with same name as a content type in your project before running the export."
-      )
-    )
-    .addWidget(translateIdSwitch);
+  const dropDown = CardService.newSelectionInput()
+    .setType(CardService.SelectionInputType.DROPDOWN)
+    .setTitle("Choose the content type to export.")
+    .setFieldName(KEY_SELECTED_TYPE);
+  for (const type of allTypes) {
+    dropDown.addItem(type.name, type.codename, false);
+  }
 
-  const fixedFooter = CardService.newFixedFooter().setPrimaryButton(
-    CardService.newTextButton()
-      .setText("Export")
-      .setOnClickAction(
-        CardService.newAction().setFunctionName("exportContentItems")
-      )
-  );
+  const section = CardService.newCardSection()
+    .addWidget(translateIdSwitch)
+    .addWidget(dropDown);
+
+    const fixedFooter = CardService.newFixedFooter()
+    .setPrimaryButton(
+      CardService.newTextButton()
+        .setText("Export")
+        .setOnClickAction(
+          CardService.newAction()
+            .setFunctionName("exportContentItems")
+        )
+    );
 
   return CardService.newCardBuilder()
     .setName(CARD_EXPORT)
+    .setHeader(
+      CardService.newCardHeader().setTitle(
+        "Exports all language variants of the selected content type as rows of a new Sheet."
+    ))
     .addSection(section)
     .setFixedFooter(fixedFooter)
     .build();

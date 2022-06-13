@@ -1,5 +1,6 @@
 const exportContentItems = (e) => {
   // Check options selected
+  const typeCodeName = e.commonEventObject.formInputs[KEY_SELECTED_TYPE].stringInputs.value[0];
   if (e.commonEventObject.formInputs) {
     doTranslateIDs = e.commonEventObject.formInputs[KEY_TRANSLATEIDS]
       ? true
@@ -11,6 +12,16 @@ const exportContentItems = (e) => {
       (assetCache = null),
       (choiceCache = null),
       (modularCache = null);
+  }
+
+  let type;
+  const typeResponse = getType(typeCodeName);
+  if (typeResponse.code === 200) {
+    type = typeResponse.data;
+  }
+  else {
+    showAlert(`Error retrieving content type: ${typeResponse.data}`);
+    return;
   }
 
   // Try to get all items
@@ -30,78 +41,59 @@ const exportContentItems = (e) => {
     languages = langResponse.data;
   }
 
-  // Generate all Sheets
-  let allTypes;
-  const typeResponse = loadTypes();
-  if (typeResponse.code === 200) {
-    allTypes = typeResponse.data;
-    allTypes.forEach((type) => {
-      const typeJson = JSON.stringify(type);
-      makeSheetForType({
-        commonEventObject: { parameters: { json: typeJson } },
-      });
-    });
-  } else {
-    showAlert(`Error retrieving content types: ${typeResponse.data}`);
-    return;
-  }
+  const sheet = makeSheet(typeCodeName);
 
-  // Loop through types and add variants to Sheet
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  allTypes.forEach((type) => {
-    // Get elements for type- type object doesn't contain snippets, so load them here
-    const typeElements = getTypeElements(type);
-    const values = [];
-    const sheet = ss.getSheetByName(type.codename);
-    
-    if (sheet != null) {
-      const headers = sheet.getDataRange().getValues();
-      let componentColumn = -1;
-      for (let i = 0; i < headers[0].length; i++) {
-        if (headers[0][i] === "rich_text_components") {
-          componentColumn = i;
-          break;
-        }
+  // Get elements for type- type object doesn't contain snippets, so load them here
+  const typeElements = getTypeElements(type);
+  const values = [];
+  
+  if (sheet != null) {
+    const headers = sheet.getDataRange().getValues();
+    let componentColumn = -1;
+    for (let i = 0; i < headers[0].length; i++) {
+      if (headers[0][i] === "rich_text_components") {
+        componentColumn = i;
+        break;
       }
-
-      // Get all variants of this type
-      const variantsResponse = getAllVariantsByType(type.codename);
-      if (variantsResponse.code === 200) {
-        for (const variant of variantsResponse.data) {
-          let variantData = [];
-          let components = [];
-          for (const header of headers[0]) {
-            // For all headers, get corresponding value in variant and format if needed
-            const value = getValueForHeader(
-              header,
-              variant,
-              type,
-              allItems,
-              languages,
-              components,
-              allTypes,
-              typeElements
-            );
-            variantData.push(value);
-          }
-
-          // Set the value of rich_text_components- it was skipped during getValueForHeader to ensure that
-          // all rich text fields were parsed before this column is set
-          if (componentColumn > -1) {
-            if (components.length > 0)
-              variantData[componentColumn] = JSON.stringify(components);
-            else variantData[componentColumn] = "";
-          }
-
-          values.push(variantData);
-        }
-      }
-
-      // Set sheet values
-      if (values.length > 0)
-        sheet.getRange(2, 1, values.length, values[0].length).setValues(values);
     }
-  });
+
+    // Get all variants of this type
+    const variantsResponse = getAllVariantsByType(typeCodeName);
+    if (variantsResponse.code === 200) {
+      for (const variant of variantsResponse.data) {
+        let variantData = [];
+        let components = [];
+        for (const header of headers[0]) {
+          // For all headers, get corresponding value in variant and format if needed
+          const value = getValueForHeader(
+            header,
+            variant,
+            type,
+            allItems,
+            languages,
+            components,
+            allTypes,
+            typeElements
+          );
+          variantData.push(value);
+        }
+
+        // Set the value of rich_text_components- it was skipped during getValueForHeader to ensure that
+        // all rich text fields were parsed before this column is set
+        if (componentColumn > -1) {
+          if (components.length > 0)
+            variantData[componentColumn] = JSON.stringify(components);
+          else variantData[componentColumn] = "";
+        }
+
+        values.push(variantData);
+      }
+    }
+
+    // Set sheet values
+    if (values.length > 0)
+      sheet.getRange(2, 1, values.length, values[0].length).setValues(values);
+  }
 };
 
 /**
