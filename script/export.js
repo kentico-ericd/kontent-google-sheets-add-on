@@ -127,19 +127,21 @@ const parseElementValue = (
     case "taxonomy": {
       let retVal = "";
       for (const row of value) {
+        // For assets, ignore the "renditions" property
+        const index = typeElement.type === "asset" ? Object.keys(row).findIndex(k => k !== "renditions") : 0;
         if (doTranslateIDs) {
           // MAPI returns IDs of references for taxonomy, etc. Try to load codename/external-id instead
           const desiredRefType =
             typeElement.type === "asset" ? "external_id" : "codename";
           const newRef = getReferenceForObject(
             typeElement,
-            Object.values(row)[0],
+            Object.values(row)[index],
             desiredRefType,
             allTypes
           );
           retVal += newRef;
         } else {
-          retVal += `${Object.keys(row)[0]}:${Object.values(row)[0]},`;
+          retVal += `${Object.keys(row)[index]}:${Object.values(row)[index]},`;
         }
       }
       // Trim trailing comma

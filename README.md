@@ -161,6 +161,10 @@ There is an optional __Translate IDs__ setting you can enable before exporting. 
 
 This is helpful if you are considering exporting items from Project A and into Project B. Both projects may have a taxonomy term called "Events," but the `id` of the term will be different. If the codename is "events" in both projects, the content items which reference that taxonomy term can be imported without any issues.
 
+### Asset renditions
+
+This add-on does't currently support exporting/importing [asset renditions](https://kontent.ai/learn/reference/management-api-v2/#tag/Asset-renditions). Only the original asset reference will be exported to Google Sheets using this add-on.
+
 # Contributing
 1. Clone this repo and run `npm i`
 1. Create a Google App Script project
