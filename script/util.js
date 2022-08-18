@@ -64,6 +64,7 @@ const getValueForUpsert = (value, type, codeName, currencyFormat, componentData 
       };
     }
     case "asset":
+    case "subpages":
     case "modular_content":
     case "multiple_choice":
     case "taxonomy": {
