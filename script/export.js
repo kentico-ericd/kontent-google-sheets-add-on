@@ -114,6 +114,7 @@ const parseElementValue = (
       else return value;
 
     case "asset":
+    case "subpages":
     case "modular_content":
     case "multiple_choice":
     case "taxonomy": {
@@ -254,6 +255,7 @@ const getReferenceForObject = (
       }
       break;
 
+    case "subpages":
     case "modular_content":
       // Load cache if it hasn't been loaded yet
       if (!modularCache) {
