@@ -3,7 +3,7 @@
     "@babel/core": "^7.14.2",
     "@babel/preset-env": "^7.14.2",
     "@kentico-ericd/kontent-richtext-validation": "^0.0.13",
-    "babel-loader": "^8.2.2",
+    "babel-loader": "^8.3.0",
     "copy-webpack-plugin": "^8.1.1"
   },
   "devDependencies": {
